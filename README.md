@@ -1,6 +1,6 @@
-#  Content-aware music recommendation using the AVD model of musical preference
+#  Nonnegative matrix factorization from binary data via majorization-minimization
 
-This repository contains the code for reproducing the experiments in our paper entitled [Leveraging the structure of musical preference in content-aware music recommendation](https://arxiv.org/abs/2010.00392), published at the IEEE International Conference on Audio, Speech and Signal Processing (ICASSP) I2021.
+This repository contains the code for reproducing the experiments in our paper entitled [Nonnegative matrix factorization from binary data via majorization-minimization](https://arxiv.org/abs/2010.00392), published in the IEEE Signal Processing Letters in 2022.
 
 ### Getting the data
 
@@ -9,8 +9,6 @@ After cloning or downloading this repository, you will need to get the data from
 * The [meta-data file](http://millionsongdataset.com/sites/default/files/AdditionalFiles/track_metadata.db) for the whole set.
 * The list of [unique tracks](http://millionsongdataset.com/sites/default/files/AdditionalFiles/unique_tracks.txt).
 * The [playcounts](http://millionsongdataset.com/sites/default/files/challenge/train_triplets.txt.zip) from the Taste Profile set.
-
-You will also need the pre-computed ESSENTIA data to extract the features, which are available [here](https://zenodo.org/record/3860557#.X5BuHJ1fg5m) (download the file `msd_played_songs_essentia.csv.gz`).
 
 All the files should be unziped (if needed) and placed in the `data/` folder.
 Note that you can change the folder structure, as long as you change the path accordingly in the code.
