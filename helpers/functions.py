@@ -1,12 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = 'Paul Magron -- INRIA Nancy - Grand Est, France'
+__docformat__ = 'reStructuredText'
 
 import bottleneck as bn
 import numpy as np
 from scipy import sparse
+import pandas as pd
 
-__author__ = 'Paul Magron -- IRIT, Université de Toulouse, CNRS, France'
-__docformat__ = 'reStructuredText'
+
+def load_tp_data_as_csr(csv_file, shape):
+    tp = pd.read_csv(csv_file)
+    rows, cols = np.array(tp['uid'], dtype=np.int32), np.array(tp['sid'], dtype=np.int32)
+    count = tp['count']
+    sparse_tp = sparse.csr_matrix((count, (rows, cols)), dtype=np.int16, shape=shape)
+    # Binarize the data
+    sparse_tp.data = np.ones_like(sparse_tp.data)
+    return sparse_tp, rows, cols
 
 
 # Generate of list of user indexes for each batch
@@ -88,50 +98,6 @@ def my_ndcg_k_batch(true_ratings, pred_ratings, k=100):
 
     dcg = (true_ratings[np.arange(n_users_currbatch)[:, np.newaxis], idx_topk].toarray() * tp).sum(axis=1)
     idcg = np.array([(tp[:min(n, k)]).sum() for n in true_ratings.getnnz(axis=1)])
-    ndcg = dcg / (idcg + 1e-8)
-
-    return ndcg
-
-
-# NDCG for out-of-matrix prediction (don't bother with left-out data)
-def my_ndcg_out(true_ratings, pred_ratings, batch_users=5000):
-
-    # Iterate over user batches
-    res = list()
-    for user_idx in user_idx_generator(true_ratings.shape[0], batch_users):
-        true_ratings_batch = true_ratings[user_idx]
-        pred_ratings_batch = pred_ratings[user_idx, :]
-        res.append(my_ndcg_out_batch(true_ratings_batch, pred_ratings_batch))
-
-    # Get the mean and std NDCG over users
-    ndcg = np.hstack(res)
-    # Add artifial nans where there are 0s (to avoid warnings)
-    ndcg[ndcg == 0] = np.nan
-    ndcg_mean = np.nanmean(ndcg)
-    ndcg_std = np.nanstd(ndcg)
-
-    return ndcg_mean, ndcg_std
-
-
-def my_ndcg_out_batch(true_ratings, pred_ratings):
-
-    # Get all ranks
-    all_rank = np.argsort(np.argsort(-pred_ratings, axis=1), axis=1)
-
-    # Build the discount template
-    tp = 1. / np.log2(np.arange(2, true_ratings.shape[1] + 2))
-    all_disc = tp[all_rank]
-
-    # Get the binarized ground truth ratings
-    true_ratings_bin = (true_ratings > 0).tocoo()
-
-    # Get the NDCG
-    disc = sparse.csr_matrix((all_disc[true_ratings_bin.row, true_ratings_bin.col],
-                              (true_ratings_bin.row, true_ratings_bin.col)),
-                             shape=all_disc.shape)
-    dcg = np.array(disc.sum(axis=1)).ravel()
-    idcg = np.array([tp[:n].sum() for n in true_ratings.getnnz(axis=1)])
-
     ndcg = dcg / (idcg + 1e-8)
 
     return ndcg

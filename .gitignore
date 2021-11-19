@@ -62,7 +62,6 @@ target/
 *.db
 *.swp
 *.csv
-!data/essentia_varnames.csv
 *.json
 *.npz
-avd_analysis.py
+*.rda
