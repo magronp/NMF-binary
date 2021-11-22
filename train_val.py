@@ -81,7 +81,7 @@ if __name__ == '__main__':
     np.random.seed(12345)
 
     # Define the common parameters
-    curr_dataset = 'tp_med/'
+    curr_dataset = 'tp_big/'
 
     params = {'data_dir': 'data/' + curr_dataset,
               'out_dir': 'outputs/' + curr_dataset,
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     training_validation(params, list_hyperparams, model_name='pf')
 
     # Binary NMF - MM
-    list_alpha = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
+    list_alpha = [0.01, 0.1, 1, 10]
     list_beta = list_alpha
     list_hyperparams = list(itertools.product(list_alpha, list_beta))
     training_validation(params, list_hyperparams, model_name='bmf_mm')

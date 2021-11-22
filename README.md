@@ -4,22 +4,12 @@ This repository contains the code for reproducing the experiments in our paper e
 
 ### Getting the data
 
-After cloning or downloading this repository, you will need to get the data from the [Million Song Dataset](http://millionsongdataset.com/) to reproduce the results.
-
-* The [meta-data file](http://millionsongdataset.com/sites/default/files/AdditionalFiles/track_metadata.db) for the whole set.
-* The list of [unique tracks](http://millionsongdataset.com/sites/default/files/AdditionalFiles/unique_tracks.txt).
-* The [playcounts](http://millionsongdataset.com/sites/default/files/challenge/train_triplets.txt.zip) from the Taste Profile set.
-
-All the files should be unziped (if needed) and placed in the `data/` folder.
+After cloning or downloading this repository, you will have the .rda data for several datasets.
+To conduct music recommendation experiments, you need to also get the data from the [Million Song Dataset](http://millionsongdataset.com/).
+Its available to download directly [here](http://millionsongdataset.com/sites/default/files/challenge/train_triplets.txt.zip), the txt file should be placed  in the `data/` folder.
 Note that you can change the folder structure, as long as you change the path accordingly in the code.
 
-### Preprocessing the playcounts and features
-
-Once you're set, simply execute the `prepare_data.py` script to produce a handful of files (notably splitting the dataset into training, validation and test subsets).
-This will also extract the AVD features and create the corresponding split. 
-
-Note that by runing the script `helpers/extrac_features.py`, you can also obtain the factor loadings (Table 1 in the paper) and obtain the songs with maximum / minimum AVD values.
-
+Once you're set, simply execute the `prepare_data.py` script to produce a handful of files for each dataset (notably splitting the dataset into training, validation and test subsets).
 
 ### Reproducing the experiments
 

@@ -94,17 +94,7 @@ def split_tp(data_dir='data/'):
     # Load filtered TP data
     data_frame = pd.read_csv(data_dir + 'data.csv')
 
-    # Load the list of unique sids
-    unique_sid = []
-    with open(data_dir + '/unique_sid.txt', 'r') as f:
-        for line in f:
-            unique_sid.append(line.strip())
-
-    # Select 5% songs for out-of-matrix prediction
-    n_songs = len(unique_sid)
-    out_sid = unique_sid[int(0.95 * n_songs):]
-
-    # Pick out 10% of the rating for test
+    # Pick out 10% of the non-zero counts for test
     n_ratings = data_frame.shape[0]
     test = np.random.choice(n_ratings, size=int(0.1 * n_ratings), replace=False)
     test_idx = np.zeros(n_ratings, dtype=bool)
@@ -112,7 +102,7 @@ def split_tp(data_dir='data/'):
     test_tp = data_frame[test_idx]
     train_tp = data_frame[~test_idx]
 
-    # Pick out 10% of the (remaining) training rating as validation set
+    # Pick out 10% of the (remaining) training  non-zero counts as validation set
     n_ratings = train_tp.shape[0]
     vad = np.random.choice(n_ratings, size=int(0.1 * n_ratings), replace=False)
     val_idx = np.zeros(n_ratings, dtype=bool)
@@ -136,6 +126,8 @@ def numerize_subset(subset_to_numerize, song2id, user2id, data_dir='data/'):
     data_frame['uid'] = uid
     data_frame['sid'] = sid
     data_frame.to_csv(data_dir + subset_to_numerize + '.num.csv', index=False)
+
+    return
 
 
 def numerize_tp(data_dir='data/'):
@@ -208,7 +200,6 @@ if __name__ == '__main__':
     prepare_dataset(data_dir=data_dir)
     print_sparsity(data_dir)
     
-
     # Create the TP dataset
     data_dir = 'data/tp_med/'
     create_folder(data_dir)
