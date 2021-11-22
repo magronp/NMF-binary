@@ -64,4 +64,3 @@ target/
 *.csv
 *.json
 *.npz
-*.rda
