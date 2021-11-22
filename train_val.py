@@ -8,7 +8,7 @@ import itertools
 from helpers.wmf import factorize_wmf
 from helpers.bin_nmf import train_nmf_binary
 from helpers.pf_vi import pf
-from helpers.functions import load_tp_data_as_csr, my_ndcg
+from helpers.functions import create_folder, load_tp_data_as_binary_csr, my_ndcg
 import os
 os.environ['OMP_NUM_THREADS'] = '1'  # to not conflict with joblib
 
@@ -35,13 +35,16 @@ def get_factorization(train_data, params, model_name, hypp):
 
 def training_validation(params, list_hyperparams, model_name='wmf'):
 
+    # Create the output folder if needed
+    create_folder(params['out_dir'])
+
     #  Get the number of songs and users in the training dataset (leave 5% of the songs for out-of-matrix prediction)
     n_users = len(open(params['data_dir'] + 'unique_uid.txt').readlines())
     n_songs = len(open(params['data_dir'] + 'unique_sid.txt').readlines())
 
     # Load the training and validation data
-    train_data = load_tp_data_as_csr(params['data_dir'] + 'train.num.csv', shape=(n_users, n_songs))[0]
-    val_data = load_tp_data_as_csr(params['data_dir'] + 'val.num.csv', shape=(n_users, n_songs))[0]
+    train_data = load_tp_data_as_binary_csr(params['data_dir'] + 'train.num.csv', shape=(n_users, n_songs))[0]
+    val_data = load_tp_data_as_binary_csr(params['data_dir'] + 'val.num.csv', shape=(n_users, n_songs))[0]
 
     # initialize the optimal ndcg for validation
     val_ndcg = []
@@ -56,8 +59,8 @@ def training_validation(params, list_hyperparams, model_name='wmf'):
         W, H = get_factorization(train_data, params, model_name, hypp)
 
         # Validation with NDCG@50
-        pred_ratings = W.dot(H.T)
-        ndcg_mean = my_ndcg(val_data, pred_ratings, batch_users=params['batch_size'], k=50, leftout_ratings=train_data)[0]
+        pred_data = W.dot(H.T)
+        ndcg_mean = my_ndcg(val_data, pred_data, batch_users=params['batch_size'], k=50, leftout_ratings=train_data)[0]
         print('\n NDCG on the validation set: %.2f' % (ndcg_mean * 100))
         val_ndcg.append([hypp, ndcg_mean])
 
@@ -78,8 +81,10 @@ if __name__ == '__main__':
     np.random.seed(12345)
 
     # Define the common parameters
-    params = {'data_dir': 'data/',
-              'out_dir': 'outputs/',
+    curr_dataset = 'tp_med/'
+
+    params = {'data_dir': 'data/' + curr_dataset,
+              'out_dir': 'outputs/' + curr_dataset,
               'n_factors': 50,
               'n_iters': 20,
               'batch_size': 1000,
@@ -96,7 +101,7 @@ if __name__ == '__main__':
     training_validation(params, list_hyperparams, model_name='pf')
 
     # Binary NMF - MM
-    list_alpha = [0.1, 0.5, 1]
+    list_alpha = [0.001, 0.01, 0.1, 1, 10, 100, 1000]
     list_beta = list_alpha
     list_hyperparams = list(itertools.product(list_alpha, list_beta))
     training_validation(params, list_hyperparams, model_name='bmf_mm')

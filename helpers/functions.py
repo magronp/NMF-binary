@@ -7,9 +7,16 @@ import bottleneck as bn
 import numpy as np
 from scipy import sparse
 import pandas as pd
+import os
 
 
-def load_tp_data_as_csr(csv_file, shape):
+def create_folder(path):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    return
+
+
+def load_tp_data_as_binary_csr(csv_file, shape):
     tp = pd.read_csv(csv_file)
     rows, cols = np.array(tp['uid'], dtype=np.int32), np.array(tp['sid'], dtype=np.int32)
     count = tp['count']
