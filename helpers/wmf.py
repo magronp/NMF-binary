@@ -16,7 +16,7 @@ from numba import jit
 from tqdm import tqdm
 
 
-def get_confidence(playcounts, alpha, epsilon):
+def get_confidence(playcounts, alpha=2.0, epsilon=1e-6):
     conf = playcounts.copy()
     conf.data = alpha * np.log(1 + conf.data / epsilon)
     return conf
