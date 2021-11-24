@@ -62,7 +62,9 @@ def train_nmf_binary(Y, left_out_data, n_factors=20, n_iters=20, prior_alpha=1, 
 
         # Compute the loss
         #loss.append(np.sum(np.multiply(Y, np.log(WH)) + np.multiply(One_minus_Y_wo_val, np.log(1-WH))))
-        loss.append(-np.sum(Y.multiply(np.log(WH)) + One_minus_Y_wo_val.multiply(np.log(1-WH))))
+        loss.append(-np.sum(Y.multiply(np.log(WH)) + One_minus_Y_wo_val.multiply(np.log(1-WH))) -
+                    np.sum(A * np.log(H) + B * np.log(1-H)))
+
         numerator = np.multiply(H, np.dot(W, Y / (WH + eps))) + A
         denom2 = np.multiply((1 - H), np.dot(W, One_minus_Y_wo_val / (1 - WH + eps))) + B
         H = numerator / (numerator + denom2)
