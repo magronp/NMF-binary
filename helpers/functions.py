@@ -8,6 +8,7 @@ import numpy as np
 from scipy import sparse
 import pandas as pd
 import os
+from matplotlib import pyplot as plt
 
 
 def create_folder(path):
@@ -24,6 +25,35 @@ def load_tp_data_as_binary_csr(csv_file, shape):
     # Binarize the data
     sparse_tp.data = np.ones_like(sparse_tp.data)
     return sparse_tp, rows, cols
+
+
+def pred_data_from_WH(W, H, true_data, len_max=1000):
+    
+    # get rows and cols indices for the data and shuffle them
+    rows, cols = true_data.nonzero()
+    my_perm = np.random.permutation(len(rows))
+    rows, cols = rows[my_perm], cols[my_perm]
+    # initialize the array for storing the prediction
+    pred_len = np.minimum(len(rows), len_max)
+    pred_data = np.zeros(pred_len)
+    # calculate predictions as WH
+    for i in range(pred_len):
+       pred_data[i] = np.sum(W[rows[i], :] * H[cols[i], :])
+    
+    return pred_data
+
+
+def plot_hist_predictions(W, H, Y):
+    
+    pred_data1 = pred_data_from_WH(W, H, Y)
+    pred_data0 = pred_data_from_WH(W, H, sparse.csr_matrix(1-Y.toarray()))
+    plt.figure()
+    plt.hist(pred_data1, bins=50)
+    plt.hist(pred_data0, bins=50)
+    plt.legend(['ones', 'zeros'])
+    plt.show()
+    
+    return
 
 
 # Generate of list of user indexes for each batch

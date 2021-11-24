@@ -8,7 +8,8 @@ import os
 import time
 from scipy import sparse
 from tqdm import tqdm
-from helpers.functions import load_tp_data_as_binary_csr
+from helpers.functions import load_tp_data_as_binary_csr, plot_hist_predictions
+
 os.environ['OMP_NUM_THREADS'] = '1'  # to not conflict with joblib
 
 
@@ -22,7 +23,6 @@ def train_nmf_binary_fast(Y, left_out_data, n_factors=20, n_iters=20, prior_alph
     """
     Meant for processing sparse matrices for Y
     """
-    np.random.seed(12345)
     # Get the shapes
     n_users, n_songs = Y.shape
 
@@ -77,6 +77,9 @@ def train_nmf_binary_fast(Y, left_out_data, n_factors=20, n_iters=20, prior_alph
     
     time_tot = time.time() - start_time
     
+    W.astype('float32')
+    H.astype('float32')
+    
     return W, H, loss, time_tot
 
 
@@ -84,7 +87,6 @@ def train_nmf_binary(Y, left_out_data, n_factors=20, n_iters=20, prior_alpha=1, 
     """
     Meant for processing sparse matrices for Y
     """
-    np.random.seed(12345)
     # Get the shapes
     n_users, n_songs = Y.shape
 
@@ -138,6 +140,9 @@ def train_nmf_binary(Y, left_out_data, n_factors=20, n_iters=20, prior_alpha=1, 
         W = np.multiply(W, np.dot(H, YT / (WtHT + eps)) + np.dot(1 - H, One_minus_YT_wo_val / (1 - WtHT + eps))) / n_songs
 
     time_tot = time.time() - start_time
+    
+    W.astype('float32')
+    H.astype('float32')
     
     return W.T, H.T, loss, time_tot
 
@@ -201,7 +206,9 @@ if __name__ == '__main__':
     Y = train_data
     
     W, H, loss, time_tot = train_nmf_binary(Y, left_out_data, n_factors=n_factors, n_iters=n_iters, prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps, comp_loss=True)
-    Wf, Hf, lossf, time_totf = train_nmf_binary_fast(Y, left_out_data, n_factors=n_factors, n_iters=n_iters, prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps, comp_loss=True)
+    #Wf, Hf, lossf, time_totf = train_nmf_binary_fast(Y, left_out_data, n_factors=n_factors, n_iters=n_iters, prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps, comp_loss=True)
 
-
+    # Vizualization
+    plot_hist_predictions(W, H, train_data)
+    
 # EOF

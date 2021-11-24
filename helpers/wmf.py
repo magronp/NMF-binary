@@ -12,8 +12,8 @@ Proc. of ISMIR 2015."
 
 import numpy as np
 from joblib import Parallel, delayed
-from numba import jit
 from tqdm import tqdm
+from helpers.functions import load_tp_data_as_binary_csr, pred_data_from_WH, plot_hist_predictions
 
 
 def get_confidence(playcounts, alpha=2.0, epsilon=1e-6):
@@ -99,8 +99,9 @@ def factorize_wmf(Y, n_factors, n_iters=10, lambda_W=1e-2, lambda_H=100, dtype='
 
     return W, H
 
-
+""" 
 # Adapted to python 3 with Jit
+from numba import jit
 @jit
 def _inner(W, H, rows, cols, dtype):
     n_ratings = rows.size
@@ -112,5 +113,43 @@ def _inner(W, H, rows, cols, dtype):
         for j in range(n_components):
             data[i] += W[rows[i], j] * H[cols[i], j]
     return data
+"""
+
+
+if __name__ == '__main__':
+
+    # Set random seed for reproducibility
+    np.random.seed(12345)
+
+    # Define the parameters
+    curr_dataset = 'tp_small/'
+    data_dir = 'data/' + curr_dataset
+    lambda_W, lambda_H  = 1e-2, 100
+    n_factors = 20
+    n_iters = 20
+    eps = 1e-8
+    
+    #  Get the number of songs and users in the training dataset (leave 5% of the songs for out-of-matrix prediction)
+    n_users = len(open(data_dir + 'unique_uid.txt').readlines())
+    n_songs = len(open(data_dir + 'unique_sid.txt').readlines())
+
+    # Load the training and validation data
+    train_data = load_tp_data_as_binary_csr(data_dir + 'train.num.csv', shape=(n_users, n_songs))[0]
+    val_data = load_tp_data_as_binary_csr(data_dir + 'val.num.csv', shape=(n_users, n_songs))[0]
+    test_data = load_tp_data_as_binary_csr(data_dir + 'test.num.csv', shape=(n_users, n_songs))[0]
+    left_out_data = val_data + test_data
+    Y = train_data
+    
+    W, H = factorize_wmf(Y, n_factors=n_factors, n_iters=n_iters, lambda_W=lambda_W,
+                         lambda_H=lambda_H, batch_size=1000,
+                         n_jobs=-1, init_std=0.01, alpha_conf=2.0, eps_conf=1e-6)
+    
+    # Vizualization
+    plot_hist_predictions(W, H, train_data)
+    
+    
+# EOF
+
+
 
 # EOF
