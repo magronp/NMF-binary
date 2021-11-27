@@ -9,8 +9,6 @@ If you use it, please acknowledge it by citing the corresponding paper:
 "O. Gouvert, T. Oberlin, C. Févotte "Recommendation from Raw Data with Adaptive Compound Poisson Factorization",
 '''
 
-# %% GIBBS FOR ZIPF
-
 ## Model
 # W ~ Gamma(aphaW,betaW)    ## UxK xN
 # H ~ Gamma(aphaH,betaH)    ## IxK xN
@@ -22,7 +20,7 @@ If you use it, please acknowledge it by citing the corresponding paper:
 # c|W,H ~ Mult(y, W*H)
 
 ## Order: W,H,C
-# %%
+
 import numpy as np
 from scipy import sparse, special
 import os
@@ -30,6 +28,7 @@ import time
 import pickle
 import sys
 from tqdm import tqdm
+from helpers.functions import load_tp_data_as_binary_csr, pred_data_from_WH, plot_hist_predictions
 
 
 class pf():
@@ -202,4 +201,37 @@ def _writeline_and_time(s):
     return time.time()
 
 
-# %%
+
+if __name__ == '__main__':
+
+    # Set random seed for reproducibility
+    np.random.seed(12345)
+
+    # Define the parameters
+    curr_dataset = 'tp_small/'
+    data_dir = 'data/' + curr_dataset
+    hypp = 10
+    n_factors = 20
+    n_iters = 20
+    eps = 1e-8
+    
+    #  Get the number of songs and users in the training dataset (leave 5% of the songs for out-of-matrix prediction)
+    n_users = len(open(data_dir + 'unique_uid.txt').readlines())
+    n_songs = len(open(data_dir + 'unique_sid.txt').readlines())
+
+    # Load the training and validation data
+    train_data = load_tp_data_as_binary_csr(data_dir + 'train.num.csv', shape=(n_users, n_songs))[0]
+    val_data = load_tp_data_as_binary_csr(data_dir + 'val.num.csv', shape=(n_users, n_songs))[0]
+    test_data = load_tp_data_as_binary_csr(data_dir + 'test.num.csv', shape=(n_users, n_songs))[0]
+    left_out_data = val_data + test_data
+    Y = train_data
+    
+    model_pf = pf(K=n_factors, alphaW=hypp, alphaH=hypp)
+    model_pf.fit(train_data, opt_hyper=['beta'], precision=0, max_iter=n_iters, save=False)
+    W, H = model_pf.Ew, model_pf.Eh
+
+    # Vizualization
+    plot_hist_predictions(W, H, train_data)
+    
+# EOF
+

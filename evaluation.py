@@ -29,7 +29,7 @@ ndcg_mean = my_ndcg(test_data, pred_data, batch_users=params['batch_size'], k=50
 print('random : ', ndcg_mean * 100)
 
 # Load the trained model, compute predictions and score
-for model_name in ['wmf','pf', 'bmf_em', 'bmf_mm']:
+for model_name in ['wmf', 'pf', 'bmf_em', 'bmf_mm']:
     factors = np.load(params['out_dir'] + model_name + '_model.npz')
     W, H, hypp = factors['W'], factors['H'], factors['hyper_params']
     pred_data = W.dot(H.T)

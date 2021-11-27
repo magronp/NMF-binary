@@ -43,10 +43,10 @@ def pred_data_from_WH(W, H, true_data, len_max=1000):
     return pred_data
 
 
-def plot_hist_predictions(W, H, Y):
+def plot_hist_predictions(W, H, Y, len_max=1000):
     
-    pred_data1 = pred_data_from_WH(W, H, Y)
-    pred_data0 = pred_data_from_WH(W, H, sparse.csr_matrix(1-Y.toarray()))
+    pred_data1 = pred_data_from_WH(W, H, Y, len_max)
+    pred_data0 = pred_data_from_WH(W, H, sparse.csr_matrix(1-Y.toarray()), len_max)
     plt.figure()
     plt.hist(pred_data1, bins=50)
     plt.hist(pred_data0, bins=50)

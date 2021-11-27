@@ -8,32 +8,37 @@ import itertools
 from helpers.wmf import factorize_wmf
 from helpers.bin_nmf import train_nmf_binary
 from helpers.pf_vi import pf
-from helpers.functions import create_folder, load_tp_data_as_binary_csr, my_ndcg
+from helpers.functions import create_folder, load_tp_data_as_binary_csr, my_ndcg, plot_hist_predictions
 import os
 os.environ['OMP_NUM_THREADS'] = '1'  # to not conflict with joblib
 
 
 def get_factorization(train_data, params, model_name, hypp, left_out_data=None):
 
+    np.random.seed(1234)
+    n_iters = params['n_iters']
+    batch_size = params['batch_size']
+    #n_factors = params['n_factors']
+    n_factors = hypp[-1]
+    
     # Allocate W and H to avoid warning
     W, H = None, None
-
+    
     if model_name == 'wmf':
-        W, H = factorize_wmf(train_data, params['n_factors'], n_iters=params['n_iters'], lambda_W=hypp[0],
-                             lambda_H=hypp[1],
-                             dtype='float32', batch_size=params['batch_size'], n_jobs=-1, init_std=0.01)
+        W, H = factorize_wmf(train_data, n_factors, n_iters=n_iters, lambda_W=hypp[0],
+                             lambda_H=hypp[1], batch_size=batch_size, n_jobs=-1, init_std=0.01)
     elif model_name == 'bmf_mm' or model_name == 'bmf_em':
-        W, H = train_nmf_binary(train_data, left_out_data, n_factors=params['n_factors'], n_iters=params['n_iters'],
+        W, H = train_nmf_binary(train_data, left_out_data, n_factors=n_factors, n_iters=n_iters,
                                 prior_alpha=hypp[0], prior_beta=hypp[1])[:2]
     elif model_name == 'pf':
-        model_pf = pf(K=params['n_factors'], alphaW=hypp, alphaH=hypp)
-        model_pf.fit(train_data, opt_hyper=['beta'], precision=0, max_iter=params['n_iters'], save=False)
+        model_pf = pf(K=n_factors, alphaW=hypp[0], alphaH=hypp[0])
+        model_pf.fit(train_data, opt_hyper=['beta'], precision=0, max_iter=n_iters, save=False)
         W, H = model_pf.Ew, model_pf.Eh
 
     return W, H
 
 
-def training_validation(params, list_hyperparams, model_name='wmf'):
+def training_validation(params, list_hyperparams, model_name='wmf', plot_val_histo=False):
 
     # Create the output folder if needed
     create_folder(params['out_dir'])
@@ -65,7 +70,9 @@ def training_validation(params, list_hyperparams, model_name='wmf'):
         ndcg_mean = my_ndcg(val_data, pred_data, batch_users=params['batch_size'], k=50, leftout_ratings=train_data)[0]
         print('\n NDCG on the validation set: %.2f' % (ndcg_mean * 100))
         val_ndcg.append([hypp, ndcg_mean])
-
+        if plot_val_histo:
+            plot_hist_predictions(W, H, val_data)
+        
         # Check if the performance is better: save the model and record the corresponding hyper parameters
         if ndcg_mean > opt_ndgc:
             np.savez(params['out_dir'] + model_name + '_model.npz', W=W, H=H, hyper_params=hypp)
@@ -87,32 +94,35 @@ if __name__ == '__main__':
 
     params = {'data_dir': 'data/' + curr_dataset,
               'out_dir': 'outputs/' + curr_dataset,
-              'n_factors': 20,
-              'n_iters': 20,
+              'n_factors': 50,
+              'n_iters': 100,
               'batch_size': 1000,
               }
+    
+    list_nfactors = [8, 16, 32, 64, 128]
 
     # WMF
-    rand_search_size = 1
-    list_hyperparams = np.random.permutation(list(itertools.product(np.logspace(-2, 2, 5), np.logspace(-2, 2, 5))))
+    rand_search_size = 5
+    list_hyperparams = np.random.permutation(list(itertools.product(np.logspace(-2, 2, 5), np.logspace(-2, 2, 5), list_nfactors)))
     list_hyperparams = list_hyperparams[:rand_search_size]
-    training_validation(params, list_hyperparams, model_name='wmf')
+    #training_validation(params, list_hyperparams, model_name='wmf')
 
     # PF
-    list_hyperparams = [.01, .1, 1, 10, 100]
-    training_validation(params, list_hyperparams, model_name='pf')
+    list_alpha = [.01, .1, 1, 10, 100]
+    list_hyperparams = list(itertools.product(list_alpha, list_nfactors))
+    #training_validation(params, list_hyperparams, model_name='pf', plot_val_histo=True)
 
     # Binary NMF - MM
-    list_alpha = [1, 2, 3, 5, 10, 15]
+    list_alpha = [1.1, 1.2, 1.4, 1.6, 1.8, 2]
     list_beta = list_alpha
-    list_hyperparams = list(itertools.product(list_alpha, list_beta))
-    training_validation(params, list_hyperparams, model_name='bmf_mm')
+    list_hyperparams = list(itertools.product(list_alpha, list_beta, list_nfactors))
+    training_validation(params, list_hyperparams, model_name='bmf_mm', plot_val_histo=True)
 
     # Binary NMF - EM (no prior)
     list_alpha = [1]
     list_beta = list_alpha
-    list_hyperparams = list(itertools.product(list_alpha, list_beta))
-    training_validation(params, list_hyperparams, model_name='bmf_em')
+    list_hyperparams = list(itertools.product(list_alpha, list_beta, list_nfactors))
+    #training_validation(params, list_hyperparams, model_name='bmf_em')
 
 
 """
