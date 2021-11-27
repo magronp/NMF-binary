@@ -26,6 +26,68 @@ def train_nmf_binary(Y, left_out_data=None, n_factors=20, n_iters=20, prior_alph
     # Get the shapes
     n_users, n_songs = Y.shape
 
+    # Acount for the left out data (val / test) needed for 1-Y (no need to treat it as a sparse matrix)
+    if left_out_data is None:
+        One_minus_Y_wo_val = 1-Y.toarray()
+    else:
+        One_minus_Y_wo_val = 1-Y.toarray()-left_out_data.toarray()
+
+    # Precompute the transposed version of the data
+    YT = Y.T
+    One_minus_YT_wo_val = One_minus_Y_wo_val.T
+
+    # Initialize NMF matrices (respecting constraints)
+    H = np.random.uniform(0, 1, (n_songs, n_factors))
+    W = np.random.uniform(0, 1, (n_users, n_factors))
+    Wsum = np.sum(W, axis=1)
+    Wsum = np.repeat(Wsum[:, np.newaxis], n_factors, axis=1)
+    W = W / Wsum
+
+    # Beta prior
+    A = np.ones_like(H) * (prior_alpha - 1)
+    B = np.ones_like(H) * (prior_beta - 1)
+
+    loss, ndcg_val = [], []
+    start_time = time.time()
+    
+    for ii in tqdm(range(n_iters)):
+
+        # Update on H
+        WH = np.dot(W, H.T)
+
+        if not(val_data is None):
+            ndcg_mean = my_ndcg(val_data, WH, k=50, leftout_ratings=Y)[0]
+            ndcg_val.append(ndcg_mean)
+            
+        # Compute the loss
+        if comp_loss:
+            locc_curr = -np.sum(Y.multiply(np.log(WH+eps)))
+            - np.sum(One_minus_Y_wo_val * np.log(1-WH+eps))
+            - np.sum(A * np.log(H+eps) + B * np.log(1-H+eps))
+            loss.append(locc_curr)
+            
+        numerator = H * Y.multiply(1 / (WH + eps)).T.dot(W) + A
+        denom2 = (1 - H) * np.dot( (One_minus_Y_wo_val / (1 - WH + eps)).T, W) + B
+        H = numerator / (numerator + denom2)
+        
+        # Update on W
+        WtHT = np.dot(H, W.T)
+        W = W * (YT.multiply(1 / (WtHT + eps)).T.dot(H) + np.dot((One_minus_YT_wo_val / (1 - WtHT + eps)).T, 1 - H)) / n_songs
+        
+    time_tot = time.time() - start_time
+    
+    W, H = np.array(W), np.array(H)
+    
+    return W, H, loss, time_tot, ndcg_val
+
+
+def train_nmf_binary_fast_old(Y, left_out_data=None, n_factors=20, n_iters=20, prior_alpha=1, prior_beta=1, eps=1e-8, comp_loss=False, val_data=None):
+    """
+    Meant for processing sparse matrices for Y
+    """
+    # Get the shapes
+    n_users, n_songs = Y.shape
+
     # Acount for the left out data (val / test) needed for 1-Y
     One_minus_Y = sparse.csr_matrix(1-Y.toarray())
     if left_out_data is None:
@@ -192,7 +254,7 @@ if __name__ == '__main__':
     np.random.seed(12345)
 
     # Define the parameters
-    curr_dataset = 'tp_med/'
+    curr_dataset = 'tp_small/'
     data_dir = 'data/' + curr_dataset
     prior_alpha, prior_beta  = 1, 1
     n_factors = 64

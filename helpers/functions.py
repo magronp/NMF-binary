@@ -67,19 +67,19 @@ def user_idx_generator(n_users, batch_users):
 def my_ndcg(true_ratings, pred_ratings, batch_users=5000, k=None, leftout_ratings=None):
 
     n_users, n_songs = true_ratings.shape
-
+    pred_ratings_up = pred_ratings
     # Remove predictions on the left-out ratings ('train' for validation, and 'train+val' for testing)
     if leftout_ratings is not None:
         item_idx = np.zeros((n_users, n_songs), dtype=bool)
         item_idx[leftout_ratings.nonzero()] = True
-        pred_ratings[item_idx] = -np.inf
+        pred_ratings_up[item_idx] = -np.inf
 
     # Loop over user batches
     res = list()
     for user_idx in user_idx_generator(n_users, batch_users):
         # Take a batch
         true_ratings_batch = true_ratings[user_idx]
-        pred_ratings_batch = pred_ratings[user_idx, :]
+        pred_ratings_batch = pred_ratings_up[user_idx, :]
         # Call the NDCG for the current batch (depending on k)
         # If k not specified, compute the whole (standard) NDCG instead of its truncated version NDCG@k
         if k is None:
