@@ -88,11 +88,14 @@ def factorize_wmf(Y, n_factors, n_iters=10, lambda_W=1e-2, lambda_H=100, batch_s
     confT = conf.T.tocsr()
 
     # Initialize WMF matrices
+    n_factors = int(n_factors)
     W = np.random.randn(n_users, n_factors) * init_std
     H = None
-    ndcg_val = []
+    ndcg_opt, ndcg_val, iter_opt = 0, [], 0
+    Wopt, Hopt = None, None
+
     # Iterate updates
-    for _ in tqdm(range(n_iters)):
+    for ii in tqdm(range(n_iters)):
 
         H = recompute_factors_batched(W, confT, lambda_H, batch_size=batch_size, n_jobs=n_jobs)
         W = recompute_factors_batched(H, conf, lambda_W, batch_size=batch_size, n_jobs=n_jobs)
@@ -100,8 +103,15 @@ def factorize_wmf(Y, n_factors, n_iters=10, lambda_W=1e-2, lambda_H=100, batch_s
         if not(val_data is None):
             ndcg_mean = my_ndcg(val_data, W.dot(H.T), batch_users=batch_size, k=50, leftout_ratings=Y)[0]
             ndcg_val.append(ndcg_mean)
-        
-    return W, H, ndcg_val
+            if ndcg_mean > ndcg_opt:
+                Wopt, Hopt = W, H
+                ndcg_opt = ndcg_mean
+                iter_opt = ii
+
+    if not(val_data is None):
+        W, H = Wopt, Hopt
+
+    return W, H, ndcg_val, iter_opt
 
 """ 
 # Adapted to python 3 with Jit
@@ -130,7 +140,7 @@ if __name__ == '__main__':
     data_dir = 'data/' + curr_dataset
     lambda_W, lambda_H  = 1e-2, 100
     n_factors = 8
-    n_iters = 10
+    n_iters = 100
     eps = 1e-8
     
     #  Get the number of songs and users in the training dataset (leave 5% of the songs for out-of-matrix prediction)
@@ -144,14 +154,14 @@ if __name__ == '__main__':
     left_out_data = val_data + test_data
     Y = train_data
     
-    W, H, ndcg_val = factorize_wmf(Y, n_factors=n_factors, n_iters=n_iters, lambda_W=lambda_W,
+    W, H, ndcg_val, iter_opt = factorize_wmf(Y, n_factors=n_factors, n_iters=n_iters, lambda_W=lambda_W,
                          lambda_H=lambda_H, batch_size=1000,
                          n_jobs=-1, init_std=0.01, alpha_conf=2.0, eps_conf=1e-6, val_data=val_data)
 
     np.savez('outputs/' + curr_dataset + '/wmf_model.npz', W=W, H=H, hyper_params=[lambda_W, lambda_H, n_factors])
     
     # Vizualization
-    plot_hist_predictions(W, H, val_data, len_max=200)
+    #plot_hist_predictions(W, H, val_data, len_max=200)
     
     # ca semble approcher 1 correctement que sur le train, mais c'est pas évident en val/test
     # a quantifier 

@@ -19,7 +19,7 @@ def get_confidence(playcounts, alpha=2.0, epsilon=1e-6):
     return conf
 
 
-def train_nmf_binary_fast(Y, left_out_data=None, n_factors=20, n_iters=20, prior_alpha=1, prior_beta=1, eps=1e-8, comp_loss=False, val_data=None):
+def train_nmf_binary(Y, left_out_data=None, n_factors=20, n_iters=20, prior_alpha=1, prior_beta=1, eps=1e-8, comp_loss=False, val_data=None):
     """
     Meant for processing sparse matrices for Y
     """
@@ -89,7 +89,7 @@ def train_nmf_binary_fast(Y, left_out_data=None, n_factors=20, n_iters=20, prior
     return W, H, loss, time_tot, ndcg_val
 
 
-def train_nmf_binary(Y, left_out_data, n_factors=20, n_iters=20, prior_alpha=1, prior_beta=1, eps=1e-8, comp_loss=False):
+def train_nmf_binary_old(Y, left_out_data, n_factors=20, n_iters=20, prior_alpha=1, prior_beta=1, eps=1e-8, comp_loss=False):
     """
     Meant for processing sparse matrices for Y
     """
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     np.random.seed(12345)
 
     # Define the parameters
-    curr_dataset = 'tp_small/'
+    curr_dataset = 'tp_med/'
     data_dir = 'data/' + curr_dataset
     prior_alpha, prior_beta  = 1, 1
     n_factors = 64
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     left_out_data = val_data + test_data
     Y = train_data
     
-    W, H, loss, time_tot, ndcg_val = train_nmf_binary_fast(Y, left_out_data, n_factors=n_factors, n_iters=n_iters, prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps, comp_loss=comp_loss)
+    W, H, loss, time_tot, ndcg_val = train_nmf_binary(Y, left_out_data, n_factors=n_factors, n_iters=n_iters, prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps, comp_loss=comp_loss)
     #plt.semilogy(loss)
     # Vizualization
     #plot_hist_predictions(W, H, val_data, len_max=200)
