@@ -8,7 +8,7 @@ from helpers.functions import load_tp_data_as_binary_csr, my_ndcg
 
 
 # Define some parameters
-curr_dataset = 'tp_med/'
+curr_dataset = 'tp_small/'
 params = {'data_dir': 'data/' + curr_dataset,
           'out_dir': 'outputs/' + curr_dataset,
           'batch_size': 1000,

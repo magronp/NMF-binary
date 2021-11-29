@@ -90,7 +90,7 @@ if __name__ == '__main__':
     np.random.seed(12345)
 
     # Define the common parameters
-    curr_dataset = 'tp_med/'
+    curr_dataset = 'tp_big/'
 
     params = {'data_dir': 'data/' + curr_dataset,
               'out_dir': 'outputs/' + curr_dataset,
@@ -98,14 +98,14 @@ if __name__ == '__main__':
               'n_iters': 100,
               'batch_size': 1000,
               }
-    
-    list_nfactors = [8, 16, 32, 64, 128]
+
+    list_nfactors = [16, 32, 64, 128, 256]
 
     # WMF
     rand_search_size = 125
     list_hyperparams = np.random.permutation(list(itertools.product(np.logspace(-2, 2, 5), np.logspace(-2, 2, 5), list_nfactors)))
     list_hyperparams = list_hyperparams[:rand_search_size]
-    #training_validation(params, list_hyperparams, model_name='wmf')
+    training_validation(params, list_hyperparams, model_name='wmf')
 
     # PF
     list_alpha = [.01, .1, 1, 10, 100]
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     training_validation(params, list_hyperparams, model_name='pf', plot_val_histo=False)
 
     # Binary NMF - MM
-    list_alpha = [1, 1.1, 1.2, 1.4, 1.6, 1.8, 2]
+    list_alpha = [1.1, 1.2, 1.4, 1.6, 2]
     list_beta = list_alpha
     list_hyperparams = list(itertools.product(list_alpha, list_beta, list_nfactors))
     training_validation(params, list_hyperparams, model_name='bmf_mm', plot_val_histo=False)

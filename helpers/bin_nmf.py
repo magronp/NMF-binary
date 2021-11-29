@@ -56,15 +56,12 @@ def train_nmf_binary(Y, left_out_data=None, n_factors=20, n_iters=20, prior_alph
         WH = np.dot(W, H.T)
 
         if not(val_data is None):
-            ndcg_mean = my_ndcg(val_data, WH, k=50, leftout_ratings=Y)[0]
+            ndcg_mean = my_ndcg(val_data, np.dot(W, H.T), k=50, leftout_ratings=Y)[0]
             ndcg_val.append(ndcg_mean)
             
         # Compute the loss
         if comp_loss:
-            locc_curr = -np.sum(Y.multiply(np.log(WH+eps)))
-            - np.sum(One_minus_Y_wo_val * np.log(1-WH+eps))
-            - np.sum(A * np.log(H+eps) + B * np.log(1-H+eps))
-            loss.append(locc_curr)
+            loss.append(-np.sum(Y.multiply(np.log(WH+eps))) - np.sum(One_minus_Y_wo_val * np.log(1-WH+eps)) - np.sum(A * np.log(H+eps) + B * np.log(1-H+eps)))
             
         numerator = H * Y.multiply(1 / (WH + eps)).T.dot(W) + A
         denom2 = (1 - H) * np.dot( (One_minus_Y_wo_val / (1 - WH + eps)).T, W) + B
@@ -256,7 +253,7 @@ if __name__ == '__main__':
     # Define the parameters
     curr_dataset = 'tp_small/'
     data_dir = 'data/' + curr_dataset
-    prior_alpha, prior_beta  = 1, 1
+    prior_alpha, prior_beta  = 1.1, 1.2
     n_factors = 64
     n_iters = 10
     eps = 1e-8
@@ -273,7 +270,7 @@ if __name__ == '__main__':
     left_out_data = val_data + test_data
     Y = train_data
     
-    W, H, loss, time_tot, ndcg_val = train_nmf_binary(Y, left_out_data, n_factors=n_factors, n_iters=n_iters, prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps, comp_loss=comp_loss)
+    W, H, loss, time_tot, ndcg_val = train_nmf_binary(Y, left_out_data, n_factors=n_factors, n_iters=n_iters, prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps, comp_loss=comp_loss, val_data=val_data)
     #plt.semilogy(loss)
     # Vizualization
     #plot_hist_predictions(W, H, val_data, len_max=200)

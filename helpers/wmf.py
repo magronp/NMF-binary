@@ -138,7 +138,7 @@ if __name__ == '__main__':
     # Define the parameters
     curr_dataset = 'tp_small/'
     data_dir = 'data/' + curr_dataset
-    lambda_W, lambda_H  = 1e-2, 100
+    lambda_W, lambda_H = 10., 0.01
     n_factors = 8
     n_iters = 100
     eps = 1e-8
@@ -154,8 +154,7 @@ if __name__ == '__main__':
     left_out_data = val_data + test_data
     Y = train_data
     
-    W, H, ndcg_val, iter_opt = factorize_wmf(Y, n_factors=n_factors, n_iters=n_iters, lambda_W=lambda_W,
-                         lambda_H=lambda_H, batch_size=1000,
+    W, H, ndcg_val, iter_opt = factorize_wmf(Y, n_factors=n_factors, n_iters=n_iters, lambda_W=lambda_W, lambda_H=lambda_H, batch_size=1000,
                          n_jobs=-1, init_std=0.01, alpha_conf=2.0, eps_conf=1e-6, val_data=val_data)
 
     np.savez('outputs/' + curr_dataset + '/wmf_model.npz', W=W, H=H, hyper_params=[lambda_W, lambda_H, n_factors])
