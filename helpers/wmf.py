@@ -13,7 +13,7 @@ Proc. of ISMIR 2015."
 import numpy as np
 from joblib import Parallel, delayed
 from tqdm import tqdm
-from helpers.functions import load_tp_data_as_binary_csr, plot_hist_predictions, my_ndcg
+from helpers.functions import load_tp_data_as_binary_csr, plot_hist_predictions, my_ndcg, plot_hist_predictions_list
 
 
 def get_confidence(playcounts, alpha=2.0, epsilon=1e-6):
@@ -154,19 +154,21 @@ if __name__ == '__main__':
     left_out_data = val_data + test_data
     Y = train_data
     
-    W, H, ndcg_val, iter_opt = factorize_wmf(Y, n_factors=n_factors, n_iters=n_iters, lambda_W=lambda_W, lambda_H=lambda_H, batch_size=1000,
+    W_and_H, ndcg_val_list = [], []
+    for n_factors in [8, 16, 32, 64, 128]:
+        W, H, ndcg_val, iter_opt = factorize_wmf(Y, n_factors=n_factors, n_iters=n_iters, lambda_W=lambda_W, lambda_H=lambda_H, batch_size=1000,
                          n_jobs=-1, init_std=0.01, alpha_conf=2.0, eps_conf=1e-6, val_data=val_data)
-
-    np.savez('outputs/' + curr_dataset + '/wmf_model.npz', W=W, H=H, hyper_params=[lambda_W, lambda_H, n_factors])
+    
+        W_and_H.append([W, H])
+        ndcg_val_list.append(np.max(ndcg_val))
+    
+    #np.savez('outputs/' + curr_dataset + '/wmf_model.npz', W=W, H=H, hyper_params=[lambda_W, lambda_H, n_factors])
     
     # Vizualization
     #plot_hist_predictions(W, H, val_data, len_max=200)
-    
+    plot_hist_predictions_list(W_and_H, val_data, ndcg_val_list=ndcg_val_list, len_max=200)
     # ca semble approcher 1 correctement que sur le train, mais c'est pas évident en val/test
     # a quantifier 
     
-# EOF
-
-
 
 # EOF

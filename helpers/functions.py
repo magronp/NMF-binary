@@ -56,6 +56,25 @@ def plot_hist_predictions(W, H, Y, len_max=1000):
     return
 
 
+def plot_hist_predictions_list(W_and_H, Y, ndcg_val_list=None, len_max=1000):
+    
+    n_p = len(W_and_H)
+    plt.figure()
+    for ip in range(n_p):
+        W, H = W_and_H[ip][0], W_and_H[ip][1]
+        pred_data1 = pred_data_from_WH(W, H, Y, len_max)
+        pred_data0 = pred_data_from_WH(W, H, sparse.csr_matrix(1-Y.toarray()), len_max)
+        plt.subplot(1, n_p, ip+1)
+        plt.hist(pred_data1, bins=50)
+        plt.hist(pred_data0, bins=50)
+        plt.legend(['ones', 'zeros'])
+        if not(ndcg_val_list is None):
+            plt.title(ndcg_val_list[ip]*100)
+    plt.show()
+    
+    return
+
+
 # Generate of list of user indexes for each batch
 def user_idx_generator(n_users, batch_users):
     for start in range(0, n_users, batch_users):

@@ -8,7 +8,7 @@ import os
 import time
 from scipy import sparse
 from tqdm import tqdm
-from helpers.functions import load_tp_data_as_binary_csr, plot_hist_predictions, my_ndcg
+from helpers.functions import load_tp_data_as_binary_csr, plot_hist_predictions, my_ndcg, plot_hist_predictions_list
 
 os.environ['OMP_NUM_THREADS'] = '1'  # to not conflict with joblib
 
@@ -255,7 +255,7 @@ if __name__ == '__main__':
     data_dir = 'data/' + curr_dataset
     prior_alpha, prior_beta  = 1.1, 1.2
     n_factors = 64
-    n_iters = 10
+    n_iters = 100
     eps = 1e-8
     comp_loss = True
     
@@ -274,6 +274,18 @@ if __name__ == '__main__':
     #plt.semilogy(loss)
     # Vizualization
     #plot_hist_predictions(W, H, val_data, len_max=200)
+    
+    W_and_H, ndcg_val_list = [], []
+    for n_factors in [8, 16, 32, 64, 128]:
+        W, H, loss, time_tot, ndcg_val = train_nmf_binary(Y, left_out_data, n_factors=n_factors, n_iters=n_iters, prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps, comp_loss=comp_loss, val_data=val_data)
+        W_and_H.append([W, H])
+        ndcg_val_list.append(np.max(ndcg_val))
+    
+    #np.savez('outputs/' + curr_dataset + '/wmf_model.npz', W=W, H=H, hyper_params=[lambda_W, lambda_H, n_factors])
+    
+    # Vizualization
+    #plot_hist_predictions(W, H, val_data, len_max=200)
+    plot_hist_predictions_list(W_and_H, val_data, ndcg_val_list=ndcg_val_list, len_max=200)
     
     # checker viz avec prior, ptetr ça change
 # EOF
