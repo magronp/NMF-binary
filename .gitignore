@@ -63,4 +63,3 @@ target/
 *.swp
 *.csv
 *.json
-*.npz
