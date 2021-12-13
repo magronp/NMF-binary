@@ -13,13 +13,13 @@ from helpers.functions import load_tp_data_as_binary_csr, plot_hist_predictions,
 os.environ['OMP_NUM_THREADS'] = '1'  # to not conflict with joblib
 
 
-def get_confidence(playcounts, alpha=2.0, epsilon=1e-6):
+def get_confidence_bin_nmf(playcounts, alpha=2.0, epsilon=1e-6):
     conf = playcounts.copy()
     conf.data = 1 + alpha * np.log(1 + conf.data / epsilon)
     return conf
 
 
-def train_nmf_binary(Y, left_out_data=None, n_factors=20, n_iters=20, prior_alpha=1, prior_beta=1, eps=1e-8, comp_loss=False, val_data=None):
+def train_nmf_binary(Y, left_out_data=None, n_factors=20, n_iters=20, prior_alpha=1., prior_beta=1., eps=1e-8, comp_loss=False, val_data=None):
     """
     Meant for processing sparse matrices for Y
     """
@@ -253,7 +253,7 @@ if __name__ == '__main__':
     # Define the parameters
     curr_dataset = 'tp_small/'
     data_dir = 'data/' + curr_dataset
-    prior_alpha, prior_beta  = 1.1, 1.2
+    prior_alpha, prior_beta = 1.1, 1.2
     n_factors = 64
     n_iters = 100
     eps = 1e-8
