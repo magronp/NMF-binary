@@ -3,83 +3,45 @@
 __author__ = 'Paul Magron -- INRIA Nancy - Grand Est, France'
 __docformat__ = 'reStructuredText'
 
+from tqdm import tqdm
 import numpy as np
+from helpers.functions import create_folder, get_perplexity, build_split_masks
+from bmf import train_nmf_binary_dense
+import pyreadr
 import itertools
-from helpers.wmf import factorize_wmf
-from helpers.bin_nmf import train_nmf_binary
-from helpers.pf_vi import pf
-from helpers.functions import create_folder, load_tp_data_as_binary_csr, my_ndcg, plot_hist_predictions
-import os
-os.environ['OMP_NUM_THREADS'] = '1'  # to not conflict with joblib
 
 
-def get_factorization(train_data, params, model_name, hypp, left_out_data=None, val_data=None):
+def train_val_nmf_binary_dense(Y, train_mask, val_mask, list_hyperparams, dataset_output_dir,
+                               model_name='bmf', n_iters=20, eps=1e-8):
 
-    np.random.seed(1234)
-    n_iters = params['n_iters']
-    batch_size = params['batch_size']
-    #n_factors = params['n_factors']
-    n_factors = hypp[-1]
-    
-    # Allocate W and H to avoid warning
-    W, H = None, None
-    
-    if model_name == 'wmf':
-        W, H = factorize_wmf(train_data, n_factors, n_iters=n_iters, lambda_W=hypp[0],
-                             lambda_H=hypp[1], batch_size=batch_size, n_jobs=-1, init_std=0.01, val_data=val_data)[:2]
-    elif model_name == 'bmf_mm' or model_name == 'bmf_em':
-        W, H = train_nmf_binary(train_data, left_out_data, n_factors=n_factors, n_iters=n_iters,
-                                prior_alpha=hypp[0], prior_beta=hypp[1])[:2]
-    elif model_name == 'pf':
-        model_pf = pf(K=n_factors, alphaW=hypp[0], alphaH=hypp[0])
-        model_pf.fit(train_data, opt_hyper=['beta'], precision=0, max_iter=n_iters, save=False)
-        W, H = model_pf.Ew, model_pf.Eh
-
-    return W, H
-
-
-def training_validation(params, list_hyperparams, model_name='wmf', plot_val_histo=False):
-
-    # Create the output folder if needed
-    create_folder(params['out_dir'])
-
-    #  Get the number of songs and users in the training dataset (leave 5% of the songs for out-of-matrix prediction)
-    n_users = len(open(params['data_dir'] + 'unique_uid.txt').readlines())
-    n_songs = len(open(params['data_dir'] + 'unique_sid.txt').readlines())
-
-    # Load the training and validation data
-    train_data = load_tp_data_as_binary_csr(params['data_dir'] + 'train.num.csv', shape=(n_users, n_songs))[0]
-    val_data = load_tp_data_as_binary_csr(params['data_dir'] + 'val.num.csv', shape=(n_users, n_songs))[0]
-    test_data = load_tp_data_as_binary_csr(params['data_dir'] + 'test.num.csv', shape=(n_users, n_songs))[0]
-    left_out_data = val_data + test_data
-
-    # initialize the optimal ndcg for validation
-    val_ndcg = []
-    opt_ndgc = 0
+    # initialize the optimal perplexity for validation
+    val_pplx = []
+    opt_pplx = float(np.inf)
     n_hypp = len(list_hyperparams)
 
     for ih, hypp in enumerate(list_hyperparams):
 
+        prior_alpha, prior_beta, n_factors = hypp[0], hypp[1], hypp[2]
+
         # Factorization
-        print('----------- Hyper parameters ', ih+1, ' / ', n_hypp)
+        print('----------- Hyper parameters ', ih + 1, ' / ', n_hypp)
         print("Factorization on the training set...")
-        W, H = get_factorization(train_data, params, model_name, hypp, left_out_data, val_data)
+        W, H = train_nmf_binary_dense(Y, mask=train_mask, n_factors=n_factors, n_iters=n_iters,
+                                      prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
 
-        # Validation with NDCG@50
-        pred_data = W.dot(H.T)
-        ndcg_mean = my_ndcg(val_data, pred_data, batch_users=params['batch_size'], k=50, leftout_ratings=train_data)[0]
-        print('\n NDCG on the validation set: %.2f' % (ndcg_mean * 100))
-        val_ndcg.append([hypp, ndcg_mean])
-        if plot_val_histo:
-            plot_hist_predictions(W, H, val_data)
-        
+        # Validation
+        Y_hat = np.dot(W, H.T)
+        perplx = get_perplexity(Y, Y_hat, mask=val_mask)
+        print('\n Val perplexity: %.2f' % (perplx))
+        val_pplx.append([hypp, perplx])
+
         # Check if the performance is better: save the model and record the corresponding hyper parameters
-        if ndcg_mean > opt_ndgc:
-            np.savez(params['out_dir'] + model_name + '_model.npz', W=W, H=H, hyper_params=hypp)
-            opt_ndgc = ndcg_mean
+        if perplx < opt_pplx:
+            np.savez(dataset_output_dir + model_name + '_model.npz', W=W, H=H, hyper_params=hypp)
+            opt_pplx = perplx
 
-    # Store the validation NDCG over hyperparameters
-    np.savez(params['out_dir'] + model_name + '_val.npz', val_ndcg=val_ndcg)
+    # Store the validation perplexity for all hyperparameters
+    np.savez(dataset_output_dir + model_name + '_model_val.npz', val_pplx=val_pplx)
 
     return
 
@@ -89,48 +51,40 @@ if __name__ == '__main__':
     # Set random seed for reproducibility
     np.random.seed(12345)
 
-    # Define the common parameters
-    curr_dataset = 'tp_big/'
+    # General path
+    data_dir = 'data/'
+    out_dir = 'outputs/'
 
-    params = {'data_dir': 'data/' + curr_dataset,
-              'out_dir': 'outputs/' + curr_dataset,
-              'n_factors': 50,
-              'n_iters': 100,
-              'batch_size': 1000,
-              }
+    # Load the data
+    my_dataset = 'lastfm'
+    dataset_path = data_dir + my_dataset
+    Y = pyreadr.read_r(dataset_path + '.rda')[my_dataset].to_numpy()
 
-    list_nfactors = [16, 32, 64, 128, 256]
+    # Define and create the output directory
+    dataset_output_dir = out_dir + my_dataset + '/'
+    create_folder(dataset_output_dir)
 
-    # WMF
-    rand_search_size = 125
-    list_hyperparams = np.random.permutation(list(itertools.product(np.logspace(-2, 2, 5), np.logspace(-2, 2, 5), list_nfactors)))
-    list_hyperparams = list_hyperparams[:rand_search_size]
-    training_validation(params, list_hyperparams, model_name='wmf')
+    # Create train / val / test split in the form of binary masks (and record the test mask for evaluation)
+    train_mask, val_mask, test_mask = build_split_masks(Y.shape)
+    np.savez(dataset_path + '_split.npz', train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
 
-    # PF
-    list_alpha = [.01, .1, 1, 10, 100]
-    list_hyperparams = list(itertools.product(list_alpha, list_nfactors))
-    training_validation(params, list_hyperparams, model_name='pf', plot_val_histo=False)
-
-    # Binary NMF - MM
-    list_alpha = [1.1, 1.2, 1.4, 1.6, 2]
+    # Hyperparameters
+    n_iters = 100
+    eps = 1e-8
+    list_nfactors = [8, 16, 32, 64, 128]
+    list_alpha = np.linspace(1, 3, 11)
     list_beta = list_alpha
     list_hyperparams = list(itertools.product(list_alpha, list_beta, list_nfactors))
-    training_validation(params, list_hyperparams, model_name='bmf_mm', plot_val_histo=False)
 
-    # Binary NMF - EM (no prior)
-    list_alpha = [1]
+    # Training with validation
+    train_val_nmf_binary_dense(Y, train_mask, val_mask, list_hyperparams, dataset_output_dir,
+                               model_name='bmf', n_iters=n_iters, eps=eps)
+
+    # Same but with no priors
+    list_alpha = [1.]
     list_beta = list_alpha
     list_hyperparams = list(itertools.product(list_alpha, list_beta, list_nfactors))
-    training_validation(params, list_hyperparams, model_name='bmf_em')
-
-
-"""
-# Plot the validation NDCG for the binary NMF model
-ndcg_val = np.load(params['out_dir'] + 'bmf_mm_ndcg_val.npz')['ndcg_val']
-plt.figure()
-plt.imshow(ndcg_val)
-plt.show()
-"""
+    train_val_nmf_binary_dense(Y, train_mask, val_mask, list_hyperparams, dataset_output_dir,
+                               model_name='bmf_noprior', n_iters=n_iters, eps=eps)
 
 # EOF

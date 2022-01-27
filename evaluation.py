@@ -4,34 +4,40 @@ __author__ = 'Paul Magron -- INRIA Nancy - Grand Est, France'
 __docformat__ = 'reStructuredText'
 
 import numpy as np
-from helpers.functions import load_tp_data_as_binary_csr, my_ndcg
+from helpers.functions import get_perplexity
+import pyreadr
 
 
-# Define some parameters
-curr_dataset = 'tp_small/'
-params = {'data_dir': 'data/' + curr_dataset,
-          'out_dir': 'outputs/' + curr_dataset,
-          'batch_size': 1000,
-          }
+def eval_data_model(my_dataset, model_name, data_dir='data/', out_dir='outputs/'):
 
-#  Get the number of songs and users in the training dataset (leave 5% of the songs for out-of-matrix prediction)
-n_users = len(open(params['data_dir'] + 'unique_uid.txt').readlines())
-n_songs = len(open(params['data_dir'] + 'unique_sid.txt').readlines())
+    # Load the data
+    dataset_path = data_dir + my_dataset
+    Y = pyreadr.read_r(dataset_path + '.rda')[my_dataset].to_numpy()
 
-# Load the training and validation data
-train_data = load_tp_data_as_binary_csr(params['data_dir'] + 'train.num.csv', shape=(n_users, n_songs))[0]
-val_data = load_tp_data_as_binary_csr(params['data_dir'] + 'val.num.csv', shape=(n_users, n_songs))[0]
-test_data = load_tp_data_as_binary_csr(params['data_dir'] + 'test.num.csv', shape=(n_users, n_songs))[0]
+    # Estimates on the test set
+    dataset_output_dir = out_dir + my_dataset + '/'
+    loader = np.load(dataset_output_dir + model_name + '_model.npz')
+    W, H = loader['W'], loader['H']
+    Y_hat = np.dot(W, H.T)
 
-# Random predictions
-pred_data = np.random.uniform(0, 1, (n_users, n_songs))
-ndcg_mean = my_ndcg(test_data, pred_data, batch_users=params['batch_size'], k=50, leftout_ratings=train_data + val_data)[0]
-print('random : ', ndcg_mean * 100)
+    # Perplexity (first load the proper test mask)
+    test_mask = np.load(dataset_path + '_split.npz')['test_mask']
+    perplx = get_perplexity(Y, Y_hat, mask=test_mask)
 
-# Load the trained model, compute predictions and score
-for model_name in ['wmf', 'pf', 'bmf_em', 'bmf_mm']:
-    factors = np.load(params['out_dir'] + model_name + '_model.npz')
-    W, H, hypp = factors['W'], factors['H'], factors['hyper_params']
-    pred_data = W.dot(H.T)
-    ndcg_mean = my_ndcg(test_data, pred_data, batch_users=params['batch_size'], k=50, leftout_ratings=train_data + val_data)[0]
-    print(model_name, ': ', ndcg_mean * 100, 'opt hyperparams:', hypp)
+    return perplx
+
+
+# Set random seed for reproducibility
+np.random.seed(12345)
+
+# General path
+data_dir = 'data/'
+out_dir = 'outputs/'
+
+for my_dataset in ['animals', 'paleo', 'lastfm']:
+    print('--- Dataset: ' + my_dataset)
+    for model_name in ['bmf_noprior', 'bmf']:
+        perplx = eval_data_model(my_dataset, model_name, data_dir=data_dir, out_dir=out_dir)
+        print(model_name + ' :', perplx)
+
+# EOF

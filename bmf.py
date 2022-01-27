@@ -3,17 +3,9 @@
 __author__ = 'Paul Magron -- INRIA Nancy - Grand Est, France'
 __docformat__ = 'reStructuredText'
 
-import numpy as np
-import os
-import time
-from scipy import sparse
 from tqdm import tqdm
-from helpers.functions import load_tp_data_as_binary_csr, plot_hist_predictions, my_ndcg, plot_hist_predictions_list
 import numpy as np
-import json
-import os
-import pandas as pd
-from helpers.functions import create_folder
+from helpers.functions import get_perplexity
 import pyreadr
 
 
@@ -55,42 +47,28 @@ def train_nmf_binary_dense(Y, mask=None, n_factors=20, n_iters=20, prior_alpha=1
     return W.T, H.T
 
 
-def get_perplexity(Y, Y_hat, mask=None, eps=1e-8):
+if __name__ == '__main__':
 
-    if mask is None:
-        mask = np.ones_like(Y)
+    # Set random seed for reproducibility
+    np.random.seed(12345)
 
-    perplx = Y * np.log(Y_hat + eps) + (1-Y) * np.log(1 - Y_hat + eps)
-    perplx = - np.sum(mask * perplx)
+    # General path
+    data_dir = 'data/'
 
-    return perplx
+    # Load the data
+    my_dataset = 'lastfm'
+    dataset_path = data_dir + my_dataset + '.rda'
+    Y = pyreadr.read_r(dataset_path)[my_dataset].to_numpy()
 
+    # training on one set of hyperparameters (no masking, thus no train/val/test split)
+    prior_alpha, prior_beta = 1.1, 1.2
+    n_factors = 64
+    n_iters = 100
+    eps = 1e-8
+    W, H = train_nmf_binary_dense(Y, n_factors=n_factors, n_iters=n_iters,
+                                  prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
+    Y_hat = np.dot(W, H.T)
+    perplx = get_perplexity(Y, Y_hat)
+    print('Perplexity on the test set:', perplx)
 
-# Set random seed for reproducibility
-np.random.seed(12345)
-
-# Load the data
-my_dataset = 'lastfm'
-data_dir = 'data/'
-data_dir_rda = data_dir + my_dataset + '/'
-create_folder(data_dir_rda)
-Y = pyreadr.read_r(data_dir + my_dataset + '.rda')[my_dataset].to_numpy()
-
-# Create train / val / test split in the form of binary masks
-
-
-# Define the parameters
-curr_dataset = 'tp_small/'
-data_dir = 'data/' + curr_dataset
-prior_alpha, prior_beta = 1.1, 1.2
-n_factors = 64
-n_iters = 100
-eps = 1e-8
-comp_loss = True
-
-# train
-W, H = train_nmf_binary_dense(Y, mask=train_mask, n_factors=n_factors, n_iters=n_iters, prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
-
-# test
-Y_hat = np.dot(W, H.T)
-perplx = get_perplexity(Y, Y_hat, test_mask)
+# EOF
