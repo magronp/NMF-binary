@@ -16,9 +16,7 @@ def eval_data_model(my_dataset, model_name, data_dir='data/', out_dir='outputs/'
 
     # Estimates on the test set
     dataset_output_dir = out_dir + my_dataset + '/'
-    loader = np.load(dataset_output_dir + model_name + '_model.npz')
-    W, H = loader['W'], loader['H']
-    Y_hat = np.dot(W, H.T)
+    Y_hat = np.load(dataset_output_dir + model_name + '_model.npz')['Y_hat']
 
     # Perplexity (first load the proper test mask)
     test_mask = np.load(dataset_path + '_split.npz')['test_mask']
@@ -27,17 +25,24 @@ def eval_data_model(my_dataset, model_name, data_dir='data/', out_dir='outputs/'
     return perplx
 
 
-# Set random seed for reproducibility
-np.random.seed(12345)
+if __name__ == '__main__':
 
-# General path
-data_dir = 'data/'
-out_dir = 'outputs/'
+    # Set random seed for reproducibility
+    np.random.seed(12345)
 
-for my_dataset in ['animals', 'paleo', 'lastfm']:
-    print('--- Dataset: ' + my_dataset)
-    for model_name in ['bmf_noprior', 'bmf']:
-        perplx = eval_data_model(my_dataset, model_name, data_dir=data_dir, out_dir=out_dir)
-        print(model_name + ' :', perplx)
+    # General path
+    data_dir = 'data/'
+    out_dir = 'outputs/'
+
+    # All datasets
+    datasets = ['animals', 'paleo', 'lastfm']
+    #datasets = ['animals']
+
+    # Loop over datasets
+    for my_dataset in datasets:
+        print('--- Dataset: ' + my_dataset)
+        for model_name in ['lpca', 'nbmf_noprior', 'nbmf']:
+            perplx = eval_data_model(my_dataset, model_name, data_dir=data_dir, out_dir=out_dir)
+            print(model_name + ' :', perplx)
 
 # EOF

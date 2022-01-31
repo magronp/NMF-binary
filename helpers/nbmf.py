@@ -9,7 +9,7 @@ from helpers.functions import get_perplexity
 import pyreadr
 
 
-def train_nmf_binary_dense(Y, mask=None, n_factors=20, n_iters=20, prior_alpha=1., prior_beta=1., eps=1e-8):
+def train_nbmf(Y, mask=None, n_factors=20, n_iters=20, prior_alpha=1., prior_beta=1., eps=1e-8):
 
     # Get the shapes
     n_users, n_songs = Y.shape
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     np.random.seed(12345)
 
     # General path
-    data_dir = 'data/'
+    data_dir = '../data/'
 
     # Load the data
     my_dataset = 'lastfm'
@@ -65,8 +65,8 @@ if __name__ == '__main__':
     n_factors = 64
     n_iters = 100
     eps = 1e-8
-    W, H = train_nmf_binary_dense(Y, n_factors=n_factors, n_iters=n_iters,
-                                  prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
+    W, H = train_nbmf(Y, n_factors=n_factors, n_iters=n_iters,
+                      prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
     Y_hat = np.dot(W, H.T)
     perplx = get_perplexity(Y, Y_hat)
     print('Perplexity on the test set:', perplx)
