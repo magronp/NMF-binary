@@ -11,7 +11,7 @@ from rpy2.robjects import pandas2ri, numpy2ri
 from rpy2.robjects.conversion import localconverter
 
 
-def train_lpca(Y, k=2, n_iters=100, mask_leftout=None):
+def train_lpca(Y, k=2, max_iter=100, mask_leftout=None):
 
     if mask_leftout is None:
         mask_leftout = np.zeros(Y.shape)
@@ -31,7 +31,7 @@ def train_lpca(Y, k=2, n_iters=100, mask_leftout=None):
         mask_leftout_r = robjects.conversion.py2rpy(mask_leftout)
 
     # Apply the logistic PCA function in R
-    W_r, H_r, Y_hat_r = logPCA_function_r(Y_r, mask_leftout_r, k, n_iters)
+    W_r, H_r, Y_hat_r = logPCA_function_r(Y_r, mask_leftout_r, k, max_iter)
 
     # Convert the output back to python
     with localconverter(robjects.default_converter + pandas2ri.converter):
@@ -62,11 +62,11 @@ if __name__ == '__main__':
     create_folder(dataset_output_dir)
 
     # Hyperparameters
-    n_iters = 100
+    max_iter = 100
     k = 2
 
     # Compute logistic PCA and display perplexity
-    W, H, Y_hat = train_lpca(data, k, n_iters)
+    W, H, Y_hat = train_lpca(data, k, max_iter)
     perplx = get_perplexity(Y, Y_hat)
     print('Perplexity on the test set:', perplx)
 

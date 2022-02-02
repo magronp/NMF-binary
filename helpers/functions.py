@@ -7,6 +7,7 @@ import numpy as np
 from scipy import sparse
 import os
 from matplotlib import pyplot as plt
+import pyreadr
 
 
 def create_folder(path):
@@ -37,6 +38,28 @@ def get_perplexity(Y, Y_hat, mask=None, eps=1e-8):
 
     perplx = Y * np.log(Y_hat + eps) + (1-Y) * np.log(1 - Y_hat + eps)
     perplx = - np.sum(mask * perplx) / np.count_nonzero(mask)
+
+    return perplx
+
+
+def get_density(my_dataset, data_dir):
+    
+    dataset_path = data_dir + my_dataset
+    Y = pyreadr.read_r(dataset_path + '.rda')[my_dataset].to_numpy()
+    dens = np.count_nonzero(Y)/np.prod(Y.shape)
+    
+    return dens
+
+
+def nbmf_loss(Y, W, H, prior_alpha=1., prior_beta=1., mask=None, eps=1e-8):
+
+    if mask is None:
+        mask = np.ones_like(Y)
+    Y_hat = np.dot(W.T, H)
+    logllik = Y * np.log(Y_hat + eps) + (1-Y) * np.log(1 - Y_hat + eps)
+    priorlik = (prior_alpha-1) * np.log(H + eps) + (prior_beta-1) * np.log(1 - H + eps)
+    
+    perplx = - (np.sum(mask * logllik) + np.sum(priorlik))/ np.count_nonzero(mask)
 
     return perplx
 

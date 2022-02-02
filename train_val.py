@@ -11,7 +11,7 @@ import pyreadr
 
 
 def traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_alpha, list_beta,
-                              dataset_output_dir, model_name='bmf', n_iters=20, eps=1e-8):
+                              dataset_output_dir, model_name='bmf', max_iter=20, eps=1e-8):
 
     Y = data.to_numpy()
 
@@ -34,12 +34,12 @@ def traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_al
                 
                 # Model fitting
                 if 'nbmf' in model_name:
-                    W, H = train_nbmf(Y, mask=train_mask, n_factors=n_factors, n_iters=n_iters,
+                    W, H, _ = train_nbmf(Y, mask=train_mask, n_factors=n_factors, max_iter=max_iter,
                                       prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
                     # Get predictions
                     Y_hat = np.dot(W, H.T)
                 else:
-                    W, H, Y_hat = train_lpca(data, n_factors, n_iters, mask_leftout=1-train_mask)
+                    W, H, Y_hat = train_lpca(data, n_factors, max_iter, mask_leftout=1-train_mask)
 
                 perplx = get_perplexity(Y, Y_hat, mask=val_mask)
                 print('\n Val perplexity: %.2f' % (perplx))
@@ -70,14 +70,14 @@ if __name__ == '__main__':
     out_dir = 'outputs/'
 
     # Hyperparameters
-    n_iters = 1000
+    max_iter = 2000
     eps = 1e-8
     list_nfactors = [2, 4, 8, 16]
-    list_alpha = np.linspace(1, 3, 21)
+    list_alpha = np.linspace(1, 2, 11)
     list_beta = list_alpha
 
     # All datasets
-    datasets = ['animals', 'paleo', 'lastfm']
+    datasets = ['animals', 'paleo', 'lastfm', 'catalanparliament']
 
     # Loop over datasets
     for my_dataset in datasets:
@@ -96,14 +96,14 @@ if __name__ == '__main__':
 
         # Training with validation
         traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_alpha, list_beta, dataset_output_dir,
-                                  model_name='nbmf', n_iters=n_iters, eps=eps)
+                                  model_name='nbmf', max_iter=max_iter, eps=eps)
 
         # Same but with no priors
         traininig_with_validation(data, train_mask, val_mask, list_nfactors, [1.], [1.], dataset_output_dir,
-                                  model_name='nbmf_noprior', n_iters=n_iters, eps=eps)
+                                  model_name='nbmf_noprior', max_iter=max_iter, eps=eps)
 
         # Train the logistic PCA model
         traininig_with_validation(data, train_mask, val_mask, list_nfactors, [1.], [1.], dataset_output_dir,
-                                  model_name='lpca', n_iters=n_iters, eps=eps)
+                                  model_name='lpca', max_iter=max_iter, eps=eps)
 
 # EOF

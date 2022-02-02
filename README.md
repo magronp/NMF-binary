@@ -11,6 +11,24 @@ Note that you can change the folder structure, as long as you change the path ac
 
 Once you're set, simply execute the `prepare_data.py` script to produce a handful of files for each dataset (notably splitting the dataset into training, validation and test subsets).
 
+### Requirements
+
+In order to run the experiments (which uses the R package logistic PCA), you need to install R. Detailed instructions here, but minimally:
+
+```
+
+```
+
+Then run R (e.g., in command line simply using the `R`), and install the corresponding pacakges:
+
+```
+install.packages('logisticPCA')
+install.packages('rARPACK')
+```
+
+Finally, you also need to install the Python package `rpy2` for interfacing both.
+
+
 ### Reproducing the experiments
 
 Now that you're all set, simply run the following scripts:

@@ -5,15 +5,19 @@ __docformat__ = 'reStructuredText'
 
 from tqdm import tqdm
 import numpy as np
-from helpers.functions import get_perplexity
+from helpers.functions import get_perplexity, nbmf_loss
 import pyreadr
 
 
-def train_nbmf(Y, mask=None, n_factors=20, n_iters=20, prior_alpha=1., prior_beta=1., eps=1e-8):
+def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_beta=1., eps=1e-8):
 
     # Get the shapes
     n_users, n_songs = Y.shape
-
+    
+    # Initialize losses
+    loss = []
+    loss_prev = np.inf
+    
     if mask is None:
         mask = np.ones_like(Y)
 
@@ -33,7 +37,8 @@ def train_nbmf(Y, mask=None, n_factors=20, n_iters=20, prior_alpha=1., prior_bet
     A = np.ones_like(H) * (prior_alpha - 1)
     B = np.ones_like(H) * (prior_beta - 1)
 
-    for _ in tqdm(range(n_iters)):
+    for _ in tqdm(range(max_iter)):
+
         # Update on H
         WH = np.dot(W.T, H)
         numerator = H * np.dot(W, Y / (WH + eps)) + A
@@ -43,8 +48,17 @@ def train_nbmf(Y, mask=None, n_factors=20, n_iters=20, prior_alpha=1., prior_bet
         # Update on W
         WtHT = np.dot(H.T, W)
         W = W * (np.dot(H, YT / (WtHT + eps)) + np.dot(1 - H, OneminusYT / (1 - WtHT + eps))) / n_songs
+        
+        # Get the loss and convergence criterion
+        loss_new = nbmf_loss(Y, W, H, prior_alpha=prior_alpha, prior_beta=prior_beta, mask=mask, eps=eps)
+        loss.append(loss_new)
 
-    return W.T, H.T
+        # Check if convergence has been reached
+        if (loss_prev - loss_new) < 1e-5:
+            break
+        loss_prev = loss_new
+        
+    return W.T, H.T, loss
 
 
 if __name__ == '__main__':
@@ -56,19 +70,19 @@ if __name__ == '__main__':
     data_dir = '../data/'
 
     # Load the data
-    my_dataset = 'lastfm'
+    my_dataset = 'animals'
     dataset_path = data_dir + my_dataset + '.rda'
     Y = pyreadr.read_r(dataset_path)[my_dataset].to_numpy()
 
     # training on one set of hyperparameters (no masking, thus no train/val/test split)
-    prior_alpha, prior_beta = 1.1, 1.2
-    n_factors = 64
-    n_iters = 100
+    prior_alpha, prior_beta = 2, 2
+    n_factors = 2
+    max_iter = 2000
     eps = 1e-8
-    W, H = train_nbmf(Y, n_factors=n_factors, n_iters=n_iters,
-                      prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
+    W, H, loss = train_nbmf(Y, n_factors=n_factors, max_iter=max_iter,
+                            prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
     Y_hat = np.dot(W, H.T)
     perplx = get_perplexity(Y, Y_hat)
-    print('Perplexity on the test set:', perplx)
+    print('\n Perplexity on the test set:', perplx)
 
 # EOF
