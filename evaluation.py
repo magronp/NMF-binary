@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # Loop over datasets
     for my_dataset in datasets:
         dens = get_density(my_dataset, data_dir=data_dir)
-        print('--------- ' + my_dataset + '----- Sparsity: ' + str(dens))
+        print('--------- ' + my_dataset + '----- Density: ' + str(dens*100) + '%')
         for model_name in ['lpca', 'nbmf_noprior', 'nbmf']:
             perplx = eval_data_model(my_dataset, model_name, data_dir=data_dir, out_dir=out_dir)
             print(model_name + ' :' + str(perplx))

@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import pyreadr
 
 list_nfactors = [2, 4, 8, 16]
-llist_alpha = np.linspace(1, 3, 11)
+list_alpha = np.linspace(1, 3, 11)
 list_beta = list_alpha
 
 # All datasets
