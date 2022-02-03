@@ -7,35 +7,51 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pyreadr
 
-
 list_nfactors = [2, 4, 8, 16]
-list_alpha = np.linspace(1, 2, 11)
+llist_alpha = np.linspace(1, 3, 11)
 list_beta = list_alpha
 
-# Load the validation results
+# All datasets
 model_name = 'nbmf'
-my_dataset = 'paleo'
-val_pplx = np.load('outputs/' + my_dataset + '/' + model_name + '_model_val.npz', allow_pickle=True)['val_pplx']
-nk, n_alpha, n_beta = val_pplx.shape
+datasets = ['animals', 'paleo', 'lastfm']
+#datasets = ['animals']
+n_datasets = len(datasets)
 
-# Check the influence of K (in the case there's no prior)
-plt.figure()
-positions = np.arange(nk)
-plt.xticks(positions, [str(k) for k in list_nfactors])
-plt.plot(val_pplx[:, 0, 0])
-
-# Check the influence of alpha and beta (for the optimal K)
-ind_k_opt, _, _ = np.unravel_index(val_pplx.argmin(), val_pplx.shape)
-plt.figure()
-plt.imshow(val_pplx[ind_k_opt, :, :], aspect='auto')
-
-xpositions = np.arange(n_beta)
-plt.xticks(xpositions, [str(k) for k in list_beta ])
-ypositions = np.arange(n_alpha)
-plt.yticks(ypositions, [str(k) for k in list_alpha])
-plt.colorbar()
+# Loop over datasets
+for i_d, my_dataset in enumerate(datasets):
+        
+    # Load the validation results
+    val_pplx = np.load('outputs/' + my_dataset + '/' + model_name + '_model_val.npz', allow_pickle=True)['val_pplx']
+    nk, n_alpha, n_beta = val_pplx.shape
+    
+    # Get the optimal indices
+    ind_k_opt, ind_alpha, ind_beta_opt = np.unravel_index(val_pplx.argmin(), val_pplx.shape)
+    
+    '''
+    # Check the influence of K (for optimal alpha and beta)
+    plt.figure()
+    positions = np.arange(nk)
+    plt.xticks(positions, [str(k) for k in list_nfactors])
+    plt.plot(val_pplx[:, ind_alpha, ind_beta_opt])
+    '''
+    
+    # Check the influence of alpha and beta (for the optimal K)
+    plt.subplot(1, n_datasets, i_d+1)
+    plt.imshow(val_pplx[ind_k_opt, :, :], aspect='auto', cmap='gray')
+    plt.gca().invert_yaxis()
+    xpositions = np.arange(n_beta)
+    plt.xticks(xpositions, [str(int(k*10)/10) for k in list_beta ])
+    plt.xlabel(r'$\beta$')
+    if i_d==0:
+        ypositions = np.arange(n_alpha)
+        plt.yticks(ypositions, [str(int(k*10)/10) for k in list_alpha])
+        plt.ylabel(r'$\alpha$')
+    else:
+        plt.yticks([])
+    plt.title(my_dataset)
+    
 plt.show()
-
+plt.tight_layout()
 
 # Check H on the lastfm dataset
 my_dataset = 'lastfm'

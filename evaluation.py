@@ -35,7 +35,7 @@ if __name__ == '__main__':
     out_dir = 'outputs/'
 
     # All datasets
-    datasets = ['animals', 'paleo', 'lastfm', 'catalanparliament']
+    datasets = ['animals', 'paleo', 'lastfm']
     #datasets = ['animals']
 
     # Loop over datasets

@@ -16,7 +16,7 @@ def create_folder(path):
     return
 
 
-def build_split_masks(mat_shape, prop_train=0.7, prop_val=0.2):
+def build_split_masks(mat_shape, prop_train=0.5, prop_val=0.25):
 
     len_tot = np.prod(mat_shape)
     all_ind = np.zeros(len_tot)
