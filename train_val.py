@@ -73,8 +73,7 @@ if __name__ == '__main__':
     max_iter = 2000
     eps = 1e-8
     list_nfactors = [2, 4, 8, 16]
-    list_alpha = np.linspace(1, 20, 20)
-    #list_alpha = np.linspace(1, 3, 11)
+    list_alpha = np.linspace(1, 3, 11)
     list_beta = list_alpha
 
     # All datasets
