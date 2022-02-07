@@ -54,7 +54,7 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
         loss.append(loss_new)
 
         # Check if convergence has been reached
-        if (loss_prev - loss_new) < 1e-6:
+        if (loss_prev - loss_new) < 1e-5:
             break
         loss_prev = loss_new
         

@@ -4,7 +4,7 @@ __author__ = 'Paul Magron -- INRIA Nancy - Grand Est, France'
 __docformat__ = 'reStructuredText'
 
 import numpy as np
-from helpers.functions import get_perplexity, get_density
+from helpers.functions import get_perplexity
 import pyreadr
 
 
@@ -35,13 +35,12 @@ if __name__ == '__main__':
     out_dir = 'outputs/'
 
     # All datasets
-    datasets = ['animals', 'paleo', 'lastfm']
+    datasets = ['animals', 'paleo', 'lastfm', 'chilevotes']
     #datasets = ['animals']
 
     # Loop over datasets
     for my_dataset in datasets:
-        dens = get_density(my_dataset, data_dir=data_dir)
-        print('--------- ' + my_dataset + '----- Density: ' + str(dens*100) + '%')
+        print('--------- ' + my_dataset)
         for model_name in ['lpca', 'nbmf_noprior', 'nbmf']:
             perplx = eval_data_model(my_dataset, model_name, data_dir=data_dir, out_dir=out_dir)
             print(model_name + ' :' + str(perplx))

@@ -4,10 +4,9 @@ __author__ = 'Paul Magron -- INRIA Nancy - Grand Est, France'
 __docformat__ = 'reStructuredText'
 
 import numpy as np
-from helpers.functions import create_folder, get_perplexity, build_split_masks
+from helpers.functions import create_folder, get_perplexity, load_data_and_mask
 from helpers.nbmf import train_nbmf
 from helpers.lpca import train_lpca
-import pyreadr
 
 
 def traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_alpha, list_beta,
@@ -77,22 +76,18 @@ if __name__ == '__main__':
     list_beta = list_alpha
 
     # All datasets
-    datasets = ['animals', 'paleo', 'lastfm']
+    datasets = ['animals', 'paleo', 'lastfm', 'chilevotes']
+    #datasets = ['animals']
 
     # Loop over datasets
     for my_dataset in datasets:
 
-        # Load the data
-        dataset_path = data_dir + my_dataset
-        data = pyreadr.read_r(dataset_path + '.rda')[my_dataset]
+        # Load the data and masks
+        data, train_mask, val_mask, _ = load_data_and_mask(data_dir, my_dataset)
 
         # Define and create the output directory
         dataset_output_dir = out_dir + my_dataset + '/'
         create_folder(dataset_output_dir)
-
-        # Create train / val / test split in the form of binary masks (and record the test mask for evaluation)
-        train_mask, val_mask, test_mask = build_split_masks(data.shape)
-        np.savez(dataset_path + '_split.npz', train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
 
         # Training with validation
         traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_alpha, list_beta, dataset_output_dir,
