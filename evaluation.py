@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # Loop over datasets
     for my_dataset in datasets:
         print('--------- ' + my_dataset)
-        for model_name in ['lpca', 'nbmf_noprior', 'nbmf']:
+        for model_name in ['lpca', 'nbmf_noprior', 'nbmf', 'nbmf_alt']:
             perplx = eval_data_model(my_dataset, model_name, data_dir=data_dir, out_dir=out_dir)
             print(model_name + ' :' + str(perplx))
 

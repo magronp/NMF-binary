@@ -115,13 +115,14 @@ def get_perplexity(Y, Y_hat, mask=None, eps=1e-8):
     return perplx
 
 
-def nbmf_loss(Y, W, H, prior_alpha=1., prior_beta=1., mask=None, eps=1e-8):
+def nbmf_loss(Y, W, H, A, B, mask=None, eps=1e-8):
 
     if mask is None:
         mask = np.ones_like(Y)
+        
     Y_hat = np.dot(W.T, H)
     logllik = Y * np.log(Y_hat + eps) + (1-Y) * np.log(1 - Y_hat + eps)
-    priorlik = (prior_alpha-1) * np.log(H + eps) + (prior_beta-1) * np.log(1 - H + eps)
+    priorlik = A * np.log(H + eps) + B * np.log(1 - H + eps)
     
     perplx = - (np.sum(mask * logllik) + np.sum(priorlik))/ np.count_nonzero(mask)
 

@@ -34,9 +34,16 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
     W = W / Wsum
 
     # Beta prior
-    A = np.ones_like(H) * (prior_alpha - 1)
-    B = np.ones_like(H) * (prior_beta - 1)
-
+    if prior_beta is not None:
+        A = np.ones_like(H) * (prior_alpha - 1)
+        B = np.ones_like(H) * (prior_beta - 1)
+    else:
+        mu = np.sum(Y, axis=0) / Y.shape[0]
+        pr_alpha = prior_alpha * mu
+        pr_beta = prior_beta * (1-mu)
+        A = np.repeat(pr_alpha[np.newaxis, :], n_factors, axis=0)
+        B = np.repeat(pr_beta[np.newaxis, :], n_factors, axis=0)
+        
     for _ in tqdm(range(max_iter)):
 
         # Update on H
@@ -50,7 +57,8 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
         W = W * (np.dot(H, YT / (WtHT + eps)) + np.dot(1 - H, OneminusYT / (1 - WtHT + eps))) / n_songs
         
         # Get the loss and convergence criterion
-        loss_new = nbmf_loss(Y, W, H, prior_alpha=prior_alpha, prior_beta=prior_beta, mask=mask, eps=eps)
+        #loss_new = nbmf_loss(Y, W, H, prior_alpha=prior_alpha, prior_beta=prior_beta, mask=mask, eps=eps)
+        loss_new = nbmf_loss(Y, W, H, A, B, mask=mask, eps=eps)
         loss.append(loss_new)
 
         # Check if convergence has been reached
@@ -76,13 +84,13 @@ if __name__ == '__main__':
 
     # training on one set of hyperparameters (no masking, thus no train/val/test split)
     prior_alpha, prior_beta = 2, 2
-    n_factors = 2
+    n_factors = 4
     max_iter = 2000
     eps = 1e-8
     W, H, loss = train_nbmf(Y, n_factors=n_factors, max_iter=max_iter,
-                            prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
+                            prior_alpha=prior_alpha, prior_beta=None, eps=eps)
     Y_hat = np.dot(W, H.T)
     perplx = get_perplexity(Y, Y_hat)
-    print('\n Perplexity on the test set:', perplx)
+    print('\n Training perplexity:', perplx)
 
 # EOF

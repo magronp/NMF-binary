@@ -14,7 +14,7 @@ list_beta = list_alpha
 # All datasets
 model_name = 'nbmf'
 datasets = ['animals', 'paleo', 'lastfm']
-#datasets = ['animals']
+datasets = ['animals']
 n_datasets = len(datasets)
 
 # Loop over datasets

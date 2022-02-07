@@ -72,7 +72,7 @@ if __name__ == '__main__':
     max_iter = 2000
     eps = 1e-8
     list_nfactors = [2, 4, 8, 16]
-    list_alpha = np.linspace(1, 3, 11)
+    list_alpha = np.linspace(0, 1, 11)
     list_beta = list_alpha
 
     # All datasets
@@ -96,6 +96,10 @@ if __name__ == '__main__':
         # Same but with no priors
         traininig_with_validation(data, train_mask, val_mask, list_nfactors, [1.], [1.], dataset_output_dir,
                                   model_name='nbmf_noprior', max_iter=max_iter, eps=eps)
+        
+        # Same but with alt priors
+        traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_alpha, list_beta, dataset_output_dir,
+                                  model_name='nbmf_alt', max_iter=max_iter, eps=eps)
 
         # Train the logistic PCA model
         traininig_with_validation(data, train_mask, val_mask, list_nfactors, [1.], [1.], dataset_output_dir,
