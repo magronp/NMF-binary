@@ -16,13 +16,15 @@ def eval_data_model(my_dataset, model_name, data_dir='data/', out_dir='outputs/'
 
     # Estimates on the test set
     dataset_output_dir = out_dir + my_dataset + '/'
-    Y_hat = np.load(dataset_output_dir + model_name + '_model.npz')['Y_hat']
+    loader = np.load(dataset_output_dir + model_name + '_model.npz')
+    Y_hat = loader['Y_hat']
+    tot_time = loader['time']
 
     # Perplexity (first load the proper test mask)
     test_mask = np.load(dataset_path + '_split.npz')['test_mask']
     perplx = get_perplexity(Y, Y_hat, mask=test_mask)
 
-    return perplx
+    return perplx, tot_time
 
 
 if __name__ == '__main__':
@@ -36,13 +38,13 @@ if __name__ == '__main__':
 
     # All datasets
     datasets = ['animals', 'paleo', 'lastfm', 'chilevotes']
-    #datasets = ['animals']
+    #datasets = ['paleo']
 
     # Loop over datasets
     for my_dataset in datasets:
         print('--------- ' + my_dataset)
         for model_name in ['lpca', 'nbmf_noprior', 'nbmf', 'nbmf_alt']:
-            perplx = eval_data_model(my_dataset, model_name, data_dir=data_dir, out_dir=out_dir)
-            print(model_name + ' :' + str(perplx))
+            perplx, tot_time = eval_data_model(my_dataset, model_name, data_dir=data_dir, out_dir=out_dir)
+            print(model_name, "-- Perplexity {:.2f} ---- Time {:.4f} ".format(perplx, tot_time))
 
 # EOF

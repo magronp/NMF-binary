@@ -7,6 +7,7 @@ from tqdm import tqdm
 import numpy as np
 from helpers.functions import get_perplexity, nbmf_loss
 import pyreadr
+import time
 
 
 def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_beta=1., eps=1e-8):
@@ -20,6 +21,8 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
     
     if mask is None:
         mask = np.ones_like(Y)
+
+    start_time = time.time()
 
     # Mask the data to retain only what's in the training set (and precompute Y transpoed and 1-Yt)
     YT = Y.T * mask.T
@@ -40,7 +43,7 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
     else:
         mu = np.sum(Y, axis=0) / Y.shape[0]
         pr_alpha = prior_alpha * mu
-        pr_beta = prior_beta * (1-mu)
+        pr_beta = prior_alpha * (1-mu)
         A = np.repeat(pr_alpha[np.newaxis, :], n_factors, axis=0)
         B = np.repeat(pr_beta[np.newaxis, :], n_factors, axis=0)
         
@@ -65,8 +68,11 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
         if (loss_prev - loss_new) < 1e-5:
             break
         loss_prev = loss_new
-        
-    return W.T, H.T, loss
+
+    # Get the computation time
+    tot_time = time.time() - start_time
+
+    return W.T, H.T, loss, tot_time
 
 
 if __name__ == '__main__':

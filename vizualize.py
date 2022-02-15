@@ -53,10 +53,9 @@ for i_d, my_dataset in enumerate(datasets):
 plt.show()
 plt.tight_layout()
 
-# Check H on the lastfm dataset
+# Check H on the lastfm dataset for the lPCA and NBMF methods
 my_dataset = 'lastfm'
 data = pyreadr.read_r('data/' + my_dataset + '.rda')[my_dataset]
-H_nbmf_noprior = np.load('outputs/' + my_dataset + '/nbmf_noprior_model.npz', allow_pickle=True)['H']
 H_nbmf = np.load('outputs/' + my_dataset + '/nbmf_model.npz', allow_pickle=True)['H']
 H_lpca = np.load('outputs/' + my_dataset + '/lpca_model.npz', allow_pickle=True)['H']
 
