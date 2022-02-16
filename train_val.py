@@ -129,7 +129,7 @@ if __name__ == '__main__':
                                   model='NBMF-EM', max_iter=max_iter, eps=eps)
 
         # Training with validation - NMBF-MM
-        list_alpha = np.linspace(1, 5, 9)
+        list_alpha = np.linspace(1, 4, 7)
         list_beta = list_alpha
         traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_alpha, list_beta, dataset_output_dir,
                                   model='NBMF-MM', max_iter=max_iter, eps=eps)
