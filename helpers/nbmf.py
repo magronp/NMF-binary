@@ -60,7 +60,7 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
         W = W * (np.dot(H, YT / (WtHT + eps)) + np.dot(1 - H, OneminusYT / (1 - WtHT + eps))) / n_songs
         
         # Get the loss and convergence criterion
-        #loss_new = nbmf_loss(Y, W, H, prior_alpha=prior_alpha, prior_beta=prior_beta, mask=mask, eps=eps)
+        # loss_new = nbmf_loss(Y, W, H, prior_alpha=prior_alpha, prior_beta=prior_beta, mask=mask, eps=eps)
         loss_new = nbmf_loss(Y, W, H, A, B, mask=mask, eps=eps)
         loss.append(loss_new)
 
@@ -93,8 +93,8 @@ if __name__ == '__main__':
     n_factors = 4
     max_iter = 2000
     eps = 1e-8
-    W, H, loss = train_nbmf(Y, n_factors=n_factors, max_iter=max_iter,
-                            prior_alpha=prior_alpha, prior_beta=None, eps=eps)
+    W, H, loss, tot_time = train_nbmf(Y, n_factors=n_factors, max_iter=max_iter,
+                            prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
     Y_hat = np.dot(W, H.T)
     perplx = get_perplexity(Y, Y_hat)
     print('\n Training perplexity:', perplx)

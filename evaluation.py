@@ -8,15 +8,15 @@ from helpers.functions import get_perplexity
 import pyreadr
 
 
-def eval_data_model(my_dataset, model_name, data_dir='data/', out_dir='outputs/'):
+def eval_data_model(dataset, model, data_dir='data/', out_dir='outputs/'):
 
     # Load the data
-    dataset_path = data_dir + my_dataset
-    Y = pyreadr.read_r(dataset_path + '.rda')[my_dataset].to_numpy()
+    dataset_path = data_dir + dataset
+    Y = pyreadr.read_r(dataset_path + '.rda')[dataset].to_numpy()
 
     # Estimates on the test set
-    dataset_output_dir = out_dir + my_dataset + '/'
-    loader = np.load(dataset_output_dir + model_name + '_model.npz')
+    dataset_output_dir = out_dir + dataset + '/'
+    loader = np.load(dataset_output_dir + model + '_model.npz')
     Y_hat = loader['Y_hat']
     tot_time = loader['time']
 
@@ -32,19 +32,18 @@ if __name__ == '__main__':
     # Set random seed for reproducibility
     np.random.seed(12345)
 
-    # General path
+    # Define general paths, all datasets and models
     data_dir = 'data/'
     out_dir = 'outputs/'
-
-    # All datasets
-    datasets = ['animals', 'paleo', 'lastfm', 'chilevotes']
-    #datasets = ['paleo']
+    models = ['NBMF-EM', 'NBMF-MM', 'logPCA']
+    datasets = ['animals', 'paleo', 'lastfm']
+    #datasets = ['animals']
 
     # Loop over datasets
-    for my_dataset in datasets:
-        print('--------- ' + my_dataset)
-        for model_name in ['lpca', 'nbmf_noprior', 'nbmf', 'nbmf_alt']:
-            perplx, tot_time = eval_data_model(my_dataset, model_name, data_dir=data_dir, out_dir=out_dir)
-            print(model_name, "-- Perplexity {:.2f} ---- Time {:.4f} ".format(perplx, tot_time))
+    for dataset in datasets:
+        print('--------- ' + dataset)
+        for model in models:
+            perplx, tot_time = eval_data_model(dataset, model, data_dir=data_dir, out_dir=out_dir)
+            print(model, "-- Perplexity {:.2f} ---- Time {:.4f} ".format(perplx, tot_time))
 
 # EOF
