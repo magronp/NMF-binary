@@ -14,14 +14,14 @@ def create_folder(path):
     return
 
 
-def load_data_and_mask(data_dir, my_dataset, prop_train=0.5, prop_val=0.25):
+def load_data_and_mask(data_dir, my_dataset, prop_train=0.7, prop_val=0.15):
 
     # Load the raw data
     dataset_path = data_dir + my_dataset
     data = pyreadr.read_r(dataset_path + '.rda')[my_dataset]
 
     # Create train / val / test split in the form of binary masks (and record the test mask for evaluation)
-    train_mask, val_mask, test_mask = build_split_masks(data.shape)
+    train_mask, val_mask, test_mask = build_split_masks(data.shape, prop_train=prop_train, prop_val=prop_val)
 
     # Record the masks
     np.savez(dataset_path + '_split.npz', train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
@@ -29,7 +29,7 @@ def load_data_and_mask(data_dir, my_dataset, prop_train=0.5, prop_val=0.25):
     return data, train_mask, val_mask, test_mask
 
 
-def build_split_masks(mat_shape, prop_train=0.5, prop_val=0.25):
+def build_split_masks(mat_shape, prop_train=0.7, prop_val=0.15):
 
     len_tot = np.prod(mat_shape)
     all_ind = np.zeros(len_tot)

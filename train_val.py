@@ -4,7 +4,8 @@ __author__ = 'Paul Magron -- INRIA Nancy - Grand Est, France'
 __docformat__ = 'reStructuredText'
 
 import numpy as np
-from helpers.functions import create_folder, get_perplexity, load_data_and_mask
+import pyreadr
+from helpers.functions import create_folder, get_perplexity, build_split_masks
 from helpers.nbmf import train_nbmf
 from helpers.lpca import train_lpca
 
@@ -103,6 +104,7 @@ if __name__ == '__main__':
     models = ['NBMF-EM', 'NBMF-MM', 'logPCA']
     datasets = ['animals', 'paleo', 'lastfm']
     #datasets = ['animals']
+    prop_train, prop_val = 0.7, 0.15
 
     # Hyperparameters
     max_iter = 2000
@@ -114,7 +116,9 @@ if __name__ == '__main__':
     for dataset in datasets:
 
         # Load the data and masks
-        data, train_mask, val_mask, test_mask = load_data_and_mask(data_dir, dataset)
+        data = pyreadr.read_r(data_dir + dataset + '.rda')[dataset]
+        train_mask, val_mask, test_mask = build_split_masks(data.shape, prop_train=prop_train, prop_val=prop_val)
+        np.savez(data_dir + dataset + '_split.npz', train_mask=train_mask, val_mask=val_mask, test_mask=test_mask)
 
         # Define and create the output directory
         dataset_output_dir = out_dir + dataset + '/'

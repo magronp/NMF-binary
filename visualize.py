@@ -4,7 +4,7 @@ __author__ = 'Paul Magron -- INRIA Nancy - Grand Est, France'
 __docformat__ = 'reStructuredText'
 
 import numpy as np
-from helpers.functions import load_data_and_mask
+import pyreadr
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
@@ -35,10 +35,12 @@ for id, my_dataset in enumerate(datasets):
     ind_k_opt, ind_alpha, ind_beta_opt = np.unravel_index(val_pplx.argmin(), val_pplx.shape)
 
     # Check the influence of K (for optimal alpha and beta)
+    """
     plt.figure()
     positions = np.arange(nk)
     plt.xticks(positions, [str(k) for k in list_nfactors])
     plt.plot(val_pplx[:, ind_alpha, ind_beta_opt])
+    """
 
     # Check the influence of alpha and beta (for the optimal K)
     plt.subplot(1, n_datasets, id+1)
@@ -98,7 +100,8 @@ Plot 3: Check H on the lastfm dataset for the logPCA and NBMF methods
 """
 # Load H
 dataset = 'lastfm'
-data = load_data_and_mask(data_dir, dataset)[0]
+data = pyreadr.read_r(data_dir + dataset + '.rda')[dataset]
+
 H_nbmf = np.load(out_dir + dataset + '/NBMF-MM_model.npz', allow_pickle=True)['H']
 H_lpca = np.load(out_dir + dataset + '/logPCA_model.npz', allow_pickle=True)['H']
 
