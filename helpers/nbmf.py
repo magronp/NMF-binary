@@ -5,9 +5,22 @@ __docformat__ = 'reStructuredText'
 
 from tqdm import tqdm
 import numpy as np
-from helpers.functions import get_perplexity, nbmf_loss
+from helpers.functions import get_perplexity
 import pyreadr
 import time
+
+
+def nbmf_loss(Y, W, H, A, B, mask=None, eps=1e-8):
+    if mask is None:
+        mask = np.ones_like(Y)
+
+    Y_hat = np.dot(W.T, H)
+    logllik = Y * np.log(Y_hat + eps) + (1 - Y) * np.log(1 - Y_hat + eps)
+    priorlik = A * np.log(H + eps) + B * np.log(1 - H + eps)
+
+    perplx = - (np.sum(mask * logllik) + np.sum(priorlik)) / np.count_nonzero(mask)
+
+    return perplx
 
 
 def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_beta=1., eps=1e-8):

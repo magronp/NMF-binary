@@ -34,13 +34,11 @@ for id, my_dataset in enumerate(datasets):
     # Get the optimal indices
     ind_k_opt, ind_alpha, ind_beta_opt = np.unravel_index(val_pplx.argmin(), val_pplx.shape)
 
-    '''
     # Check the influence of K (for optimal alpha and beta)
     plt.figure()
     positions = np.arange(nk)
     plt.xticks(positions, [str(k) for k in list_nfactors])
     plt.plot(val_pplx[:, ind_alpha, ind_beta_opt])
-    '''
 
     # Check the influence of alpha and beta (for the optimal K)
     plt.subplot(1, n_datasets, id+1)
@@ -49,7 +47,7 @@ for id, my_dataset in enumerate(datasets):
     xpositions = np.arange(n_beta)
     plt.xticks(xpositions, [str(int(k*10)/10) for k in list_beta])
     plt.xlabel(r'$\beta$')
-    if id==0:
+    if id == 0:
         ypositions = np.arange(n_alpha)
         plt.yticks(ypositions, [str(int(k*10)/10) for k in list_alpha])
         plt.ylabel(r'$\alpha$')
