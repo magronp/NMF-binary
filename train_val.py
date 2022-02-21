@@ -10,16 +10,23 @@ from helpers.nbmf import train_nbmf
 from helpers.lpca import train_lpca
 
 
-def model_fitting(data, train_mask, n_factors, prior_alpha, prior_beta, model='NBMF', max_iter=20, eps=1e-8):
+def model_fitting(data, train_mask, n_factors, prior_alpha, prior_beta, Wini=None, Hini=None, model='NBMF',
+                  max_iter=20, eps=1e-8):
+
+    # Initialize the factors
+    if (Wini is None) or (Hini is None):
+        m, n = data.shape
+        Wini = np.random.uniform(0, 1, (m, n_factors))
+        Hini = np.random.uniform(0, 1, (n, n_factors))
 
     if 'NBMF' in model:
         Y = data.to_numpy()
         W, H, loss, tot_time = train_nbmf(Y, mask=train_mask, n_factors=n_factors, max_iter=max_iter,
-                                          prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
+                                          prior_alpha=prior_alpha, prior_beta=prior_beta, Wini=Wini, Hini=Hini, eps=eps)
         # Get predictions
         Y_hat = np.dot(W, H.T)
     else:
-        W, H, Y_hat, tot_time = train_lpca(data, n_factors, max_iter, mask_leftout=1 - train_mask)
+        W, H, Y_hat, tot_time = train_lpca(data, n_factors, max_iter, mask_leftout=1 - train_mask, Wini=Wini, Hini=Hini)
         loss = None
 
     return W, H, Y_hat, tot_time, loss
@@ -75,12 +82,19 @@ def train_test_init(data, train_mask, test_mask, hyper_params, dataset_output_di
     test_pplx = np.zeros((n_init))
     test_time = np.zeros((n_init))
 
+    n_factors, prior_alpha, prior_beta = int(hyper_params[0]), hyper_params[1], hyper_params[2]
+
     # Loop over random initializations
     for ind_i in range(n_init):
 
+        # Generate random init
+        m, n = data.shape
+        Wini = np.random.uniform(0, 1, (m, n_factors))
+        Hini = np.random.uniform(0, 1, (n, n_factors))
+
         # Model fitting
-        _, _, Y_hat, tot_time, _ = model_fitting(data, train_mask, int(hyper_params[0]), hyper_params[1], hyper_params[2],
-                                                    model=model, max_iter=max_iter, eps=eps)
+        _, _, Y_hat, tot_time, _ = model_fitting(data, train_mask, n_factors, prior_alpha, prior_beta,
+                                                    Wini=Wini, Hini=Hini, model=model, max_iter=max_iter, eps=eps)
 
         # Get the perplexity on the test set and store it
         perplx = get_perplexity(data.to_numpy(), Y_hat, mask=test_mask)
@@ -134,13 +148,6 @@ if __name__ == '__main__':
         traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_alpha, list_beta, dataset_output_dir,
                                   model='NBMF-MM', max_iter=max_iter, eps=eps)
 
-        """ 
-        # Same but with alt priors
-        list_alpha = np.linspace(0, 2, 11)
-        traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_alpha, [None], dataset_output_dir,
-                                  model='nbmf_alt', max_iter=max_iter, eps=eps)
-        """
-
         # Train the logistic PCA model
         traininig_with_validation(data, train_mask, val_mask, list_nfactors, [None], [None], dataset_output_dir,
                                   model='logPCA', max_iter=max_iter, eps=eps)
@@ -151,6 +158,7 @@ if __name__ == '__main__':
             hyper_params = np.load(dataset_output_dir + model + '_model.npz', allow_pickle=True)['hyper_params']
 
             # Training and test with several random initialization
-            train_test_init(data, train_mask, test_mask, hyper_params, dataset_output_dir, model=model, max_iter=max_iter, eps=eps, n_init=n_init)
+            train_test_init(data, train_mask, test_mask, hyper_params, dataset_output_dir, model=model,
+                            max_iter=max_iter, eps=eps, n_init=n_init)
 
 # EOF

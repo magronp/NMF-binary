@@ -23,11 +23,17 @@ def nbmf_loss(Y, W, H, A, B, mask=None, eps=1e-8):
     return perplx
 
 
-def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_beta=1., eps=1e-8):
+def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_beta=1., Wini=None, Hini=None, eps=1e-8):
 
     # Get the shapes
     n_users, n_songs = Y.shape
-    
+
+    # Initialize the factors
+    if (Wini is None) or (Hini is None):
+        m, n = Y.shape
+        Wini = np.random.uniform(0, 1, (m, n_factors))
+        Hini = np.random.uniform(0, 1, (n, n_factors))
+
     # Initialize losses
     loss = []
     loss_prev = np.inf
@@ -43,8 +49,8 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
     Y = Y * mask
 
     # Initialize NMF matrices (respecting constraints)
-    H = np.random.uniform(0, 1, (n_factors, n_songs))
-    W = np.random.uniform(0, 1, (n_factors, n_users))
+    W = Wini.T
+    H = Hini.T
     Wsum = np.sum(W, axis=0)
     Wsum = np.repeat(Wsum[:, np.newaxis].T, n_factors, axis=0)
     W = W / Wsum
