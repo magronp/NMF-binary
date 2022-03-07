@@ -46,16 +46,16 @@ for id, my_dataset in enumerate(datasets):
     plt.subplot(1, n_datasets, id+1)
     plt.imshow(val_pplx[ind_k_opt, :, :], aspect='auto', cmap='gray')
     plt.gca().invert_yaxis()
-    xpositions = np.arange(n_beta)
-    plt.xticks(xpositions, [str(int(k*10)/10) for k in list_beta])
-    plt.xlabel(r'$\beta$')
+    xpositions = np.arange(n_beta)[0::2]
+    plt.xticks(xpositions, [str(int(k*10)/10) for k in list_beta][0::2])
+    plt.xlabel(r'$\beta$', fontsize=16)
     if id == 0:
-        ypositions = np.arange(n_alpha)
-        plt.yticks(ypositions, [str(int(k*10)/10) for k in list_alpha])
-        plt.ylabel(r'$\alpha$')
+        ypositions = np.arange(n_alpha)[0::2]
+        plt.yticks(ypositions, [str(int(k*10)/10) for k in list_alpha][0::2])
+        plt.ylabel(r'$\alpha$', fontsize=16)
     else:
         plt.yticks([])
-    plt.title(my_dataset)
+    plt.title(my_dataset, fontsize=16)
 
 plt.show()
 plt.tight_layout()
@@ -77,14 +77,15 @@ for ind_d, dataset in enumerate(datasets):
         test_time_all[:, ind_m, ind_d] = test_loader['test_time']
 
 # Display perplexity
+models_labs = ['NBMF\nEM', 'NBMF\nMM', 'logPCA']
 plt.figure()
 for ind_d, dataset in enumerate(datasets):
     plt.subplot(1, n_datasets, ind_d + 1)
     plt.boxplot(test_pplx_all[:, :, ind_d], showfliers=False)
-    plt.title(dataset)
-    plt.xticks([1, 2, 3], models)
+    plt.title(dataset, fontsize=18)
+    plt.xticks([1, 2, 3], models_labs)
     if ind_d == 0:
-        plt.ylabel('Perplexity')
+        plt.ylabel('Perplexity', fontsize=16)
 plt.show()
 plt.tight_layout()
 
@@ -113,12 +114,14 @@ plt.figure()
 plt.subplot(1, 2, 1)
 plt.imshow(H_nbmf[plot_range, :], aspect='auto', cmap='binary')
 ypositions = np.arange(len(labels_plot))
-plt.yticks(ypositions, labels_plot)
+plt.yticks(ypositions, labels_plot, fontsize=14)
 plt.xticks([])
+plt.title('NBMF-MM', fontsize=16)
 plt.subplot(1, 2, 2)
 plt.imshow(H_lpca[plot_range, :], aspect='auto', cmap='binary')
 plt.yticks([])
 plt.xticks([])
+plt.title('logPCA', fontsize=16)
 plt.show()
 plt.tight_layout()
 
