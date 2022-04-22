@@ -1,6 +1,6 @@
 #  Nonnegative matrix factorization from binary data via majorization-minimization
 
-This repository contains the code for reproducing the experiments in our paper entitled [Nonnegative matrix factorization from binary data via majorization-minimization](https://arxiv.org/abs/2010.00392), published in the IEEE Signal Processing Letters in 2022.
+This repository contains the code for reproducing the experiments in our paper entitled [A majorization-minimization algorithm for nonnegative binary matrix factorization](https://arxiv.org/abs/2204.09741), published in the IEEE Signal Processing Letters in 2022.
 
 After cloning or downloading this repository, you will have the .rda data for several datasets.
 
@@ -38,12 +38,11 @@ Now that you're all set, simply run the following scripts:
 <details><summary>If you use any of this code for your research, please cite our paper:</summary>
   
 ```latex
-@inproceedings{Magron2021,  
+@inproceedings{Magron2022nbmf,  
   author={P. Magron and C. F{\'e}votte},  
-  title={Leveraging the structure of musical preference in content-aware music recommendation},  
-  booktitle={Proc. IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},  
-  year={2021},
-  month={June}
+  title={A majorization-minimization algorithm for nonnegative binary matrix factorization},  
+  booktitle={IEEE ISignal Processing Letters},  
+  year={2022}
 }
 ```
 </details>

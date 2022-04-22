@@ -102,27 +102,32 @@ Plot 3: Check H on the lastfm dataset for the logPCA and NBMF methods
 # Load H
 dataset = 'lastfm'
 data = pyreadr.read_r(data_dir + dataset + '.rda')[dataset]
-
 H_nbmf = np.load(out_dir + dataset + '/NBMF-MM_model.npz', allow_pickle=True)['H']
 H_lpca = np.load(out_dir + dataset + '/logPCA_model.npz', allow_pickle=True)['H']
 
-# Take an arbitrary subset of bands for vizualization
+# Swap components for visualization
+H_nbmf[:, [2, 3]] = H_nbmf[:, [3, 2]]
+H_lpca[:, [2, 3]] = H_lpca[:, [3, 2]]
+
+# Take an arbitrary subset of bands and reorganize songs for vizualization
 plot_range = np.concatenate((np.arange(120, 130), np.arange(184, 199)), axis=0)
+plot_range = plot_range[[4, 5, 1, 0, 3, 14, 15, 2, 6, 7, 8, 9, 11, 12, 17, 18, 19, 10, 13, 16, 20, 21, 22, 23, 24]]
+
 labels_plot = np.array(data.columns)[plot_range]
+H_nbmf_plot = H_nbmf[plot_range, :]
+H_lpca_plot = H_lpca[plot_range, :]
+ypositions = np.arange(len(labels_plot))
 
 plt.figure()
 plt.subplot(1, 2, 1)
-plt.imshow(H_nbmf[plot_range, :], aspect='auto', cmap='binary')
-ypositions = np.arange(len(labels_plot))
+plt.imshow(H_nbmf_plot, aspect='auto', cmap='binary')
 plt.yticks(ypositions, labels_plot, fontsize=14)
 plt.xticks([])
 plt.title('NBMF-MM', fontsize=16)
 plt.subplot(1, 2, 2)
-plt.imshow(H_lpca[plot_range, :], aspect='auto', cmap='binary')
+plt.imshow(H_lpca_plot, aspect='auto', cmap='binary')
 plt.yticks([])
 plt.xticks([])
 plt.title('logPCA', fontsize=16)
 plt.show()
 plt.tight_layout()
-
-
