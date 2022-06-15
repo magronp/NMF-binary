@@ -21,15 +21,15 @@ def model_fitting(data, train_mask, n_factors, prior_alpha, prior_beta, Wini=Non
 
     if 'NBMF' in model:
         Y = data.to_numpy()
-        W, H, loss, tot_time = train_nbmf(Y, mask=train_mask, n_factors=n_factors, max_iter=max_iter,
-                                          prior_alpha=prior_alpha, prior_beta=prior_beta, Wini=Wini, Hini=Hini, eps=eps)
+        W, H, loss, tot_time, iters = train_nbmf(Y, mask=train_mask, n_factors=n_factors, max_iter=max_iter,
+                                                 prior_alpha=prior_alpha, prior_beta=prior_beta, Wini=Wini, Hini=Hini, eps=eps)
         # Get predictions
         Y_hat = np.dot(W, H.T)
     else:
-        W, H, Y_hat, tot_time = train_lpca(data, n_factors, max_iter, mask_leftout=1 - train_mask, Wini=Wini, Hini=Hini)
-        loss = None
+        W, H, Y_hat, tot_time, loss, iters = train_lpca(data, n_factors, max_iter, mask_leftout=1 - train_mask,
+                                                        Wini=Wini, Hini=Hini)
 
-    return W, H, Y_hat, tot_time, loss
+    return W, H, Y_hat, tot_time, loss, iters
 
 
 def traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_alpha, list_beta,
@@ -53,8 +53,8 @@ def traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_al
                 print('----------- Hyper parameters ', ih, ' / ', n_hypp)
                 
                 # Model fitting
-                W, H, Y_hat, tot_time, loss = model_fitting(data, train_mask, n_factors, prior_alpha, prior_beta,
-                                                            model=model, max_iter=max_iter, eps=eps)
+                W, H, Y_hat, tot_time, loss, iters = model_fitting(data, train_mask, n_factors, prior_alpha, prior_beta,
+                                                                   model=model, max_iter=max_iter, eps=eps)
 
                 # Perplexity on the validation set
                 perplx = get_perplexity(data.to_numpy(), Y_hat, mask=val_mask)
@@ -64,7 +64,7 @@ def traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_al
                 # Check if the performance is better: save the model and record the corresponding hyper parameters
                 if perplx < opt_pplx:
                     np.savez(dataset_output_dir + model + '_model.npz', W=W, H=H, Y_hat=Y_hat,
-                             hyper_params=(n_factors, prior_alpha, prior_beta), time=tot_time, loss=loss)
+                             hyper_params=(n_factors, prior_alpha, prior_beta), time=tot_time, loss=loss, iters=iters)
                     opt_pplx = perplx
                 
                 # Update counter
@@ -78,9 +78,10 @@ def traininig_with_validation(data, train_mask, val_mask, list_nfactors, list_al
 
 def train_test_init(data, train_mask, test_mask, hyper_params, dataset_output_dir, model='NBMF', max_iter=20, eps=1e-8, n_init=10):
 
-    # Initialize the array for storing perplexity and comp time over initializations
+    # Initialize the array for storing perplexity, comp time, and number of iterations over initializations
     test_pplx = np.zeros((n_init))
     test_time = np.zeros((n_init))
+    test_iter = np.zeros((n_init))
 
     n_factors, prior_alpha, prior_beta = int(hyper_params[0]), hyper_params[1], hyper_params[2]
 
@@ -93,16 +94,18 @@ def train_test_init(data, train_mask, test_mask, hyper_params, dataset_output_di
         Hini = np.random.uniform(0, 1, (n, n_factors))
 
         # Model fitting
-        _, _, Y_hat, tot_time, _ = model_fitting(data, train_mask, n_factors, prior_alpha, prior_beta,
-                                                    Wini=Wini, Hini=Hini, model=model, max_iter=max_iter, eps=eps)
+        _, _, Y_hat, tot_time, _, iters = model_fitting(data, train_mask, n_factors, prior_alpha, prior_beta,
+                                                        Wini=Wini, Hini=Hini, model=model, max_iter=max_iter, eps=eps)
 
         # Get the perplexity on the test set and store it
         perplx = get_perplexity(data.to_numpy(), Y_hat, mask=test_mask)
         test_pplx[ind_i] = perplx
         test_time[ind_i] = tot_time
+        test_iter[ind_i] = iters
 
-    # Save the perplexity and computation time
-    np.savez(dataset_output_dir + model + '_test_init.npz', test_pplx=test_pplx, test_time=test_time)
+    # Save the perplexity, computation time, and number of iterations
+    np.savez(dataset_output_dir + model + '_test_init.npz',
+             test_pplx=test_pplx, test_time=test_time, test_iter=test_iter)
 
     return
 
@@ -155,6 +158,7 @@ if __name__ == '__main__':
         # After validation, compute perplexity on the test set with many random initializations
         for model in models:
 
+            # Load the optimal hyperparameters for each model
             hyper_params = np.load(dataset_output_dir + model + '_model.npz', allow_pickle=True)['hyper_params']
 
             # Training and test with several random initialization

@@ -62,11 +62,12 @@ plt.tight_layout()
 
 
 """
-Plot 2: Results on the test set with variable initialization
+Plot 2: Results on the test set with various random initializations
 """
 n_init = 10
 test_pplx_all = np.zeros((n_init, n_models, n_datasets))
 test_time_all = np.zeros((n_init, n_models, n_datasets))
+test_iter_all = np.zeros((n_init, n_models, n_datasets))
 
 # Load the results
 for ind_d, dataset in enumerate(datasets):
@@ -75,26 +76,31 @@ for ind_d, dataset in enumerate(datasets):
         test_loader = np.load(dataset_output_dir + model + '_test_init.npz', allow_pickle=True)
         test_pplx_all[:, ind_m, ind_d] = test_loader['test_pplx']
         test_time_all[:, ind_m, ind_d] = test_loader['test_time']
+        test_iter_all[:, ind_m, ind_d] = test_loader['test_iter']
 
 # Display perplexity
-models_labs = ['NBMF\nEM', 'NBMF\nMM', 'logPCA']
-plt.figure()
+models_labs = ['NBMF-EM', 'NBMF-MM', 'logPCA']
+fig2 = plt.figure()
+xpos = [1, 2, 3]
+width_bp = 0.75
 for ind_d, dataset in enumerate(datasets):
     plt.subplot(1, n_datasets, ind_d + 1)
-    plt.boxplot(test_pplx_all[:, :, ind_d], showfliers=False)
-    plt.title(dataset, fontsize=18)
-    plt.xticks([1, 2, 3], models_labs)
+    plt.boxplot(test_pplx_all[:, :, ind_d], showfliers=False, positions=xpos, widths=[width_bp, width_bp, width_bp])
+    plt.title(dataset, fontsize=16)
+    plt.xticks(xpos, models_labs, fontsize=12, rotation=50)
+    plt.yticks(fontsize=12)
     if ind_d == 0:
-        plt.ylabel('Perplexity', fontsize=16)
+        plt.ylabel('Perplexity', fontsize=14)
 plt.show()
 plt.tight_layout()
 
-# Print mean perplexity and time over random initializations
+# Print mean perplexity, time, and number of iterations, over random initializations
 for ind_d, dataset in enumerate(datasets):
     print('--------- ' + dataset)
     for ind_m, model in enumerate(models):
-        print(model, "-- Perplexity {:.2f} ---- Time {:.4f} ".format(np.mean(test_pplx_all[:, ind_m, ind_d]),
-                                                                     np.mean(test_time_all[:, ind_m, ind_d])))
+        print(model, "-- Perplexity {:.2f} ---- Time {:.4f} ---- Iters {:.1f} ".format(np.mean(test_pplx_all[:, ind_m, ind_d]),
+                                                                     np.mean(test_time_all[:, ind_m, ind_d]),
+                                                                     np.mean(test_iter_all[:, ind_m, ind_d])))
 
 """
 Plot 3: Check H on the lastfm dataset for the logPCA and NBMF methods

@@ -66,7 +66,7 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
         A = np.repeat(pr_alpha[np.newaxis, :], n_factors, axis=0)
         B = np.repeat(pr_beta[np.newaxis, :], n_factors, axis=0)
         
-    for _ in tqdm(range(max_iter)):
+    for iters in tqdm(range(max_iter)):
 
         # Update on H
         WH = np.dot(W.T, H)
@@ -91,7 +91,9 @@ def train_nbmf(Y, mask=None, n_factors=8, max_iter=10, prior_alpha=1., prior_bet
     # Get the computation time
     tot_time = time.time() - start_time
 
-    return W.T, H.T, loss, tot_time
+    iters+=1
+
+    return W.T, H.T, loss, tot_time, iters
 
 
 if __name__ == '__main__':
@@ -100,7 +102,7 @@ if __name__ == '__main__':
     np.random.seed(12345)
 
     # General path
-    data_dir = '../data/'
+    data_dir = 'data/'
 
     # Load the data
     my_dataset = 'animals'
@@ -110,10 +112,10 @@ if __name__ == '__main__':
     # training on one set of hyperparameters (no masking, thus no train/val/test split)
     prior_alpha, prior_beta = 2, 2
     n_factors = 4
-    max_iter = 2000
-    eps = 1e-8
-    W, H, loss, tot_time = train_nbmf(Y, n_factors=n_factors, max_iter=max_iter,
-                            prior_alpha=prior_alpha, prior_beta=prior_beta, eps=eps)
+    max_iter = 200
+    eps = 1e-5
+    W, H, loss, tot_time, iters = train_nbmf(Y, n_factors=n_factors, max_iter=max_iter, prior_alpha=prior_alpha,
+                                             prior_beta=prior_beta, eps=eps)
     Y_hat = np.dot(W, H.T)
     perplx = get_perplexity(Y, Y_hat)
     print('\n Training perplexity:', perplx)

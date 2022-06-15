@@ -10,7 +10,9 @@ logisticPCA <- function(Y, mask_leftout, k, maxit, Wini, Hini){
   tot_time <- end_time - start_time
   W <- logpca_model$A
   H <- logpca_model$B
+  iters <- logpca_model$iters
+  loss <- logpca_model$loss_trace
   Y_hat <- fitted(logpca_model, type = "response")
 
-  return(list("W" = W, "H" = H, "Y_hat" = Y_hat, "tot_time" = tot_time))
+  return(list("W" = W, "H" = H, "Y_hat" = Y_hat, "tot_time" = tot_time, "loss"=loss, "iters"=iters))
 }

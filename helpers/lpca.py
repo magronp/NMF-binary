@@ -39,7 +39,7 @@ def train_lpca(Y, k=2, max_iter=100, mask_leftout=None, Wini=None, Hini=None):
         Hini_r = robjects.conversion.py2rpy(Hini)
 
     # Apply the logistic PCA function in R
-    W_r, H_r, Y_hat_r, tot_time_r = logPCA_function_r(Y_r, mask_leftout_r, k, max_iter, Wini_r, Hini_r)
+    W_r, H_r, Y_hat_r, tot_time_r, loss_r, iters_r = logPCA_function_r(Y_r, mask_leftout_r, k, max_iter, Wini_r, Hini_r)
 
     # Convert the output back to python
     with localconverter(robjects.default_converter + pandas2ri.converter):
@@ -47,8 +47,10 @@ def train_lpca(Y, k=2, max_iter=100, mask_leftout=None, Wini=None, Hini=None):
         W = robjects.conversion.rpy2py(W_r)
         H = robjects.conversion.rpy2py(H_r)
         tot_time = robjects.conversion.rpy2py(tot_time_r).item()
+        loss = robjects.conversion.rpy2py(loss_r)
+        iters = robjects.conversion.rpy2py(iters_r).item()
 
-    return W, H, Y_hat, tot_time
+    return W, H, Y_hat, tot_time, loss, iters
 
 
 if __name__ == '__main__':
@@ -58,7 +60,6 @@ if __name__ == '__main__':
 
     # General path
     data_dir = 'data/'
-    out_dir = 'outputs/'
 
     # Load the data
     my_dataset = 'animals'
@@ -66,16 +67,12 @@ if __name__ == '__main__':
     data = pyreadr.read_r(dataset_path + '.rda')[my_dataset]
     Y = data.to_numpy()
 
-    # Define and create the output directory (if needed)
-    dataset_output_dir = out_dir + my_dataset + '/'
-    create_folder(dataset_output_dir)
-
     # Hyperparameters
-    max_iter = 100
+    max_iter = 200
     k = 2
 
     # Compute logistic PCA and display perplexity
-    W, H, Y_hat, tot_time = train_lpca(data, k, max_iter)
+    W, H, Y_hat, tot_time, loss, iters = train_lpca(data, k, max_iter)
     perplx = get_perplexity(Y, Y_hat)
     print('Perplexity on the test set:', perplx)
 
