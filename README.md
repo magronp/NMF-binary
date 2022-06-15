@@ -39,10 +39,10 @@ It also predict the test data with various random initializations.
 <details><summary>If you use any of this code for your research, please cite our paper:</summary>
   
 ```latex
-@inproceedings{Magron2022nbmf,  
+@article{Magron2022nbmf,  
   author={P. Magron and C. F{\'e}votte},  
   title={A majorization-minimization algorithm for nonnegative binary matrix factorization},  
-  booktitle={IEEE ISignal Processing Letters},  
+  journal={IEEE ISignal Processing Letters},  
   year={2022}
 }
 ```
