@@ -1,8 +1,4 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
 
-# VIM
-#*.txt
-#!*dummy.txt
-*#.npz
+*.npz
